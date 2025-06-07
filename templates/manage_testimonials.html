@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Testimonials</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <h2>Testimonials</h2>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+                <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+                <li><a href="{{ url_for('post_vehicle') }}" >Post Vehicle</a></li>
+                <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+                <li><a href="{{ url_for('manage_testimonials') }}" class="active">Manage Testimonials</a></li>
+                <li><a href="{{ url_for('manage_queries') }}">Manage Queries</a></li>
+                <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </nav>
+
+        <section class="main-content">
+            <h1>Manage Testimonials</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        let messages = {{ messages | tojson | safe }};
+                        messages.forEach(([category, message]) => {
+                            Swal.fire({
+                                icon: category,
+                                title: message,
+                                showConfirmButton: false,
+                                timer: 2000
+                            });
+                        });
+                    });
+                </script>
+                {% endif %}
+            {% endwith %}
+
+            <table>
+                <thead>
+                  <tr>
+                    <th>Last Name</th>
+                    <th>Model ID</th>
+                    <th>Testimonial Comment</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for t in testimonials %}
+                    <tr>
+                        <td>{{ t.lastname }}</td>
+                        <td>{{ t.model_id }}</td>
+                        <td>{{ t.comment_text }}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm delete-btn" data-id="{{ t.id }}">Delete</button>
+                        </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+        </section>
+    </div>
+
+    <script>
+    $(document).ready(function () {
+        // Handle Delete
+        $('.delete-btn').click(function () {
+            let testimonialId = $(this).data('id');
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This will delete the testimonial permanently.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "/admin/delete_testimonial/" + testimonialId,
+                        type: 'POST',
+                        success: function () {
+                            Swal.fire('Deleted!', 'Testimonial has been removed.', 'success').then(() => {
+                                location.reload(); // Refresh
+                            });
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'Could not delete testimonial.', 'error');
+                        }
+                    });
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Vehicles</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <h2>Manage Vehicles</h2>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+                <li><a href="{{ url_for('manage_vehicles') }}" class="active">Manage Vehicles</a></li>
+                <li><a href="{{ url_for('post_vehicle') }}">Post Vehicle</a></li>
+                <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+                <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+                <li><a href="{{ url_for('manage_queries') }}">Manage Queries</a></li>
+                <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </nav>
+
+        <section class="main-content">
+            <h1>Manage Vehicles</h1>
+
+            <!-- Flash Messages for Notifications -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    let messages = {{ messages | tojson | safe }};
+                    messages.forEach(([category, message]) => {
+                        let title = message; // Default title
+        
+                        // Ensure "Logout Successful" is only for logout messages
+                        if (message.toLowerCase().includes("logout")) {
+                            title = "Logout Successful";
+                        }
+        
+                        Swal.fire({
+                            icon: category, 
+                            title: title, 
+                            text: category === "success" && title === "Logout Successful" ? message : "", 
+                            showConfirmButton: false, 
+                            timer: 2000
+                        });
+                    });
+                });
+            </script>
+            {% endif %}
+        {% endwith %}
+
+            <!-- Form to Add a New Vehicle -->
+            <form action="{{ url_for('add_vehicle') }}" method="POST" enctype="multipart/form-data" class="vehicle-form">
+    
+                <div class="form-group">
+                    <label for="brand_id">Select Brand:</label>
+                    <select name="brand_id" id="brand_id" required>
+                        <option value="" disabled selected>Select a Brand</option>
+                        {% for brand in brands %}
+                        <option value="{{ brand.id }}">{{ brand.brand_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="model">Model:</label>
+                    <input type="text" name="model" id="model" required placeholder="Enter vehicle model">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="transmission">Transmission:</label>
+                        <select name="transmission" id="transmission" required>
+                            <option value="" disabled selected>Select Transmission</option>
+                            <option value="automatic">Automatic</option>
+                            <option value="manual">Manual</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="people">Seating Capacity:</label>
+                        <select name="people" id="people" required>
+                            <option value="" disabled selected>Select Seat Capacity</option>
+                            <option value="2">2 People</option>
+                            <option value="3">3 People</option>
+                            <option value="4">4 People</option>
+                            <option value="5">5 People</option>
+                            <option value="6">6 People</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="gas">Fuel Type:</label>
+                        <select name="gas" id="gas" required>
+                            <option value="" disabled selected>Select Fuel Type</option>
+                            <option value="diesel">Diesel</option>
+                            <option value="gasoline">Gasoline</option>
+                            <option value="electric">Electric</option>
+                            <option value="hybrid">Hybrid</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="price_per_day">Price per Day (₱):</label>
+                        <input type="number" name="price_per_day" required placeholder="Enter price per day" min="1">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="mileage">Mileage:</label>
+                    <input type="number" id="mileage" name="mileage" class="form-control"  required placeholder="Enter mileage in km/l (ex:14)">
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Status:</label>
+                    <input type="text" name="status" id="status" value="Available" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="plate_number">Plate Number:</label>
+                    <input type="text" name="plate_number" required pattern="[A-Z]{3}[0-9]{4}" 
+                        placeholder="Format: ABC1234" title="Must be 3 uppercase letters followed by 4 numbers">
+                </div>
+
+                <div class="form-group">
+                    <label for="image">Upload Image:</label>
+                    <input type="file" name="image" accept="image/*">
+                </div>
+
+                <button type="submit" class="submit-btn">Add Vehicle</button>
+
+            </form>
+            
+            <!-- Existing Vehicles Table -->
+            <h3>Existing Vehicles</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Brand</th>
+                        <th>Model</th>
+                        <th>Transmission</th>
+                        <th>Seating Capacity</th>
+                        <th>Fuel Type</th>
+                        <th>Price per Day</th>
+                        <th>Status</th>
+                        <th>Plate Number</th>
+                        <th>Mileage</th>
+                        <th>Image</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vehicle in vehicles %}
+                    <tr data-brand="{{ vehicle.brand_id }}">
+                        <td>{{ vehicle.brand_name }}</td>
+                        <td>{{ vehicle.model }}</td>
+                        <td>{{ vehicle.transmission }}</td>
+                        <td>{{ vehicle.people }}</td>
+                        <td>{{ vehicle.gas }}</td>
+                        <td>{{ vehicle.price_per_day }}</td>
+                        <td>{{ vehicle.status }}</td>
+                        <td>{{ vehicle.plate_number }}</td>
+                        <td>{{ vehicle.mileage }}</td>
+                        <td>
+                            <img src="{{ url_for('static', filename='uploads/vehicles/' + vehicle.image_url) }}" 
+                            alt="{{ vehicle.model }}" width="100">
+                        </td>
+                        <td>
+                            <form action="{{ url_for('delete_vehicle', vehicle_id=vehicle.id) }}" method="POST" class="delete-form">
+                                <button type="submit" class="delete-btn" data-vehicle="{{ vehicle.model }}">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+
+document.addEventListener("DOMContentLoaded", function() {
+    let brandSelect = document.getElementById("brand_id");
+    let vehicleRows = document.querySelectorAll("tbody tr");
+
+    brandSelect.addEventListener("change", function() {
+        let selectedBrand = this.value;
+
+        vehicleRows.forEach(row => {
+            let rowBrand = row.getAttribute("data-brand");
+
+            if (selectedBrand === "" || rowBrand === selectedBrand) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    });
+});
+
+    document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll(".delete-btn").forEach(button => {
+        button.addEventListener("click", function(event) {
+            event.preventDefault();
+            let vehicleName = this.dataset.vehicle;  // Corrected reference
+            let form = this.closest("form");
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: `You are about to delete the vehicle: ${vehicleName}`,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, delete it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+    
+    </script>   
+</body>
+</html>

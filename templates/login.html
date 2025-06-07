@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css"> 
+</head>
+<body>
+    <nav>
+        <ul class="nav__links" id="nav-links">
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('about') }}">About</a></li>
+            <li><a href="{{ url_for('deals') }}">Rental Deals</a></li>
+            <li><a href="{{ url_for('choose') }}">Why Choose Us</a></li>
+            <li><a href="{{ url_for('clients') }}">Testimonials</a></li>
+            <li><a href="{{ url_for('register') }}">Register</a></li>
+            
+            {% if session.get('user_id') %}
+                <li><a href="update_profile">Update Profile</a></li>
+                <li><a href="/logout">Logout</a></li>
+            {% else %}
+                <li><a href="login">Login</a></li>
+                <li><a href="/register">Register</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <div class="container">
+        <h2>Login</h2>
+        <form action="{{ url_for('login') }}" method="POST">
+            <div class="input-group">
+                <i class="ri-user-line"></i>
+                <input type="email" name="email" placeholder="Enter your email" value="{{ request.form.get('email') or '' }}" required>
+            </div>
+    
+            <div class="input-group">
+                <i class="ri-lock-line"></i>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                <span class="password-toggle" onclick="togglePassword()">
+                    <i class="ri-eye-line" id="eye-icon"></i>
+                </span>
+            </div>
+    
+            <button type="submit">Login</button>
+            <p><a href="{{ url_for('forgot_password') }}">Forgot your password?</a></p>
+            <p>Back to <a href="{{ url_for('home') }}">Homepage</a></p>
+            <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+        </form>
+    </div>
+
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    
+    <script>
+        // Password visibility toggle function
+        function togglePassword() {
+            var passwordField = document.getElementById('password');
+            var eyeIcon = document.getElementById('eye-icon');
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                eyeIcon.classList.remove('ri-eye-line');
+                eyeIcon.classList.add('ri-eye-off-line');
+            } else {
+                passwordField.type = "password";
+                eyeIcon.classList.remove('ri-eye-off-line');
+                eyeIcon.classList.add('ri-eye-line');
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let flashMessages = document.querySelectorAll(".flash-messages .alert");
+
+            flashMessages.forEach((msg) => {
+                setTimeout(() => {
+                    msg.style.opacity = "0";  // Fade out the message
+                    setTimeout(() => msg.style.display = "none", 500);  // Remove after fade-out
+                }, 3000);  // After 3 seconds
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        Swal.fire({
+                            icon: "{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' }}",
+                            title: "{{ message }}",
+                            timer: 3000,
+                            showConfirmButton: false,
+                            position: 'top'
+                        });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
+    </script>
+</body>
+</html>

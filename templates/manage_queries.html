@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Queries</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <h2>Manage Queries</h2>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+                <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+                <li><a href="{{ url_for('post_vehicle') }}">Post Vehicle</a></li>
+                <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+                <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+                <li><a href="{{ url_for('manage_queries') }}" class="active">Manage Queries</a></li>
+                <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </nav>
+
+        <div class="main-content">
+            <h1>Manage Queries (Chats)</h1>
+
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_chat', user_email=user.email) }}" class="view-btn">View Chat</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

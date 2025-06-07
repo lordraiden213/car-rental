@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Vehicles</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <h2>Post Vehicles</h2>
+
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+                <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+                <li><a href="{{ url_for('post_vehicle') }}" class="active">Post Vehicle</a></li>
+                <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+                <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+                <li><a href="{{ url_for('manage_queries') }}">Manage Queries</a></li>
+                <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </nav>
+
+        <section class="main-content">
+            <h1>Post Vehicles</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let messages = {{ messages | tojson | safe }};
+            messages.forEach(([category, message]) => {
+                let title = message; // Default title is the message itself
+                
+                // If the message is about logout, change the title
+                if (message.toLowerCase().includes("logout")) {
+                    title = "Logout Successful";
+                }
+
+                Swal.fire({
+                    icon: category, 
+                    title: title, 
+                    text: category === "success" && title === "Logout Successful" ? message : "", 
+                    showConfirmButton: false, 
+                    timer: 2000
+                });
+            });
+        });
+    </script>
+    {% endif %}
+{% endwith %}
+
+
+            <h3>Existing Vehicles</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Brand</th>
+                        <th>Transmission</th>
+                        <th>Seating Capacity</th>
+                        <th>Fuel Type</th>
+                        <th>Price per Day</th>
+                        <th>Status</th>
+                        <th>Plate Number</th>
+                        <th>Mileage</th>
+                        <th>Image</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vehicle in vehicles %}
+                    <tr data-id="{{ vehicle.id }}">
+                        <form action="{{ url_for('update_vehicle', vehicle_id=vehicle.id) }}" method="POST" enctype="multipart/form-data" class="update-form">
+                            <td>{{ vehicle.model }}</td>
+                            <td>{{ vehicle.brand_name }}</td>
+                            
+                            <td>
+                                <select name="transmission" required>
+                                    <option value="automatic" {% if vehicle.transmission == 'automatic' %}selected{% endif %}>Automatic</option>
+                                    <option value="manual" {% if vehicle.transmission == 'manual' %}selected{% endif %}>Manual</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="people" required>
+                                    <option value="2" {% if vehicle.people == 2 %}selected{% endif %}>2 People</option>
+                                    <option value="3" {% if vehicle.people == 3 %}selected{% endif %}>3 People</option>
+                                    <option value="4" {% if vehicle.people == 4 %}selected{% endif %}>4 People</option>
+                                    <option value="5" {% if vehicle.people == 5 %}selected{% endif %}>5 People</option>
+                                    <option value="6" {% if vehicle.people == 6 %}selected{% endif %}>6 People</option>
+                                    <option value="7" {% if vehicle.people == 7 %}selected{% endif %}>7 People</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="gas" required>
+                                    <option value="diesel" {% if vehicle.gas == 'diesel' %}selected{% endif %}>Diesel</option>
+                                    <option value="gasoline" {% if vehicle.gas == 'gasoline' %}selected{% endif %}>Gasoline</option>
+                                    <option value="electric" {% if vehicle.gas == 'electric' %}selected{% endif %}>Electric</option>
+                                    <option value="hybrid" {% if vehicle.gas == 'hybrid' %}selected{% endif %}>Hybrid</option>
+                                </select>
+                            </td>
+                            <td><input type="number" name="price_per_day" value="{{ vehicle.price_per_day }}" required></td>
+                            <td>
+                                <label for="availability-{{ vehicle.id }}"></label>
+                                <p id="availability-{{ vehicle.id }}">{{ vehicle.status }}</p>
+                            </td>
+                            <td>{{ vehicle.plate_number }}</td>
+                            <td>{{ vehicle.mileage }}</td>                            
+                            <td>
+                                <img src="{{ url_for('static', filename='uploads/vehicles/' + vehicle.image_url) }}" alt="{{ vehicle.model }}" width="100" id="preview-{{ vehicle.id }}">
+                                <input type="file" name="image" accept="image/*" onchange="previewImage(event, {{ vehicle.id }})" style="display: none;">
+                                <button type="button" class="change-image-btn" onclick="toggleImageInput({{ vehicle.id }})">Change Image</button>
+                            </td>
+                            <td>
+                                <button type="submit" class="update-btn">Update</button>
+                                <button class="delete-btn" data-id="{{ vehicle.id }}">Delete</button>
+                            </td>
+                        </form>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        function toggleImageInput(vehicleId) {
+            const input = document.querySelector(`tr[data-id='${vehicleId}'] input[type="file"]`);
+            input.style.display = input.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function previewImage(event, vehicleId) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                document.getElementById(`preview-${vehicleId}`).src = reader.result;
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+
+        document.querySelectorAll(".delete-btn").forEach(button => {
+            button.addEventListener("click", function() {
+                const vehicleId = this.dataset.id;
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#3085d6",
+                    confirmButtonText: "Yes, delete it!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/delete_vehicle/${vehicleId}`, { method: "POST" })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    document.querySelector(`tr[data-id='${vehicleId}']`).remove();
+                                    Swal.fire("Deleted!", "Vehicle has been removed.", "success");
+                                }
+                            });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

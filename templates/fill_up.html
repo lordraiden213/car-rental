@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Why Choose Us - Thrifty Road{% endblock %}
+
+{% block content %}
+<!-- Why Choose Us Section -->
+<section class="choose__container" id="choose">
+  <div class="choose__image">
+    <img src="{{ url_for('static', filename='img/assets/choose.png') }}" alt="choose" />
+  </div>
+  <div class="choose__content">
+    <div class="user-details-box">
+      <h2>User Details</h2>
+      <table>
+        <tr>
+          <th colspan="2">User Information</th>
+        </tr>
+        <tr><th>First Name</th><td>{{ user.firstname }}</td></tr>
+        <tr><th>Last Name</th><td>{{ user.lastname }}</td></tr>
+        <tr><th>Email</th><td>{{ user.email }}</td></tr>
+        <tr><th>Phone</th><td>{{ user.phone }}</td></tr>
+        <tr><th>Birthday</th><td>{{ user.birthday }}</td></tr>
+        <tr><th>Age</th><td>{{ user.age }}</td></tr>
+        <tr><th>City</th><td>{{ user.city }}</td></tr>
+        <tr><th>Province</th><td>{{ user.province }}</td></tr>
+        <tr><th>Barangay</th><td>{{ user.barangay }}</td></tr>
+      </table>
+
+      <!-- Payment Section -->
+      {% if subscribed %}
+      <div class="already-subscribed-message">
+        <p>You are already subscribed! No need to select a payment method.</p>
+      </div>
+      {% else %}
+      <div class="payment-section">
+        <h3>Select a Payment Method</h3>
+        <form action="{{ url_for('process_payment') }}" method="POST">
+          <div class="payment-options">
+            <label for="payment_method">Payment Method:</label>
+            <select name="payment_method" id="payment_method" required>
+              <option value="" disabled selected>Select a method</option>
+              <option value="gcash">GCash</option>
+              <option value="paypal">PayPal</option>
+              <option value="cash on cashier">Cash on Cashier</option>
+            </select>
+          </div>
+          <div class="payment-plan">
+            <label for="payment_plan">Select Payment Plan:</label>
+            <select name="payment_plan" id="payment_plan" required>
+              <option value="" disabled selected>Select a plan</option>
+              <option value="5000">1 Month - ₱5000 Discount: 10%</option>
+              <option value="10000">2 Months - ₱10000 Discount: 10%</option>
+              <option value="15000">3 Months - ₱15000 Discount: 10%</option>
+              <option value="20000">4 Months - ₱20000 Discount: 10%</option>
+              <option value="25000">5 Months - ₱25000 Discount: 10%</option>
+              <option value="30000">6 Months - ₱30000 Discount: 20%</option>
+              <option value="35000">7 Months - ₱35000 Discount: 20%</option>
+              <option value="40000">8 Months - ₱40000 Discount: 20%</option>
+              <option value="45000">9 Months - ₱45000 Discount: 20%</option>
+              <option value="50000">10 Months - ₱50000 Discount: 20%</option>
+              <option value="55000">11 Months - ₱55000 Discount: 20%</option>
+              <option value="60000">12 Months - ₱60000 Discount: 20%</option>
+            </select>
+          </div>
+          <button type="submit" class="pay-btn">Proceed to Payment</button>
+        </form>
+      </div>
+      {% endif %}
+
+      <button type="button" class="back-btn" onclick="history.back()">Back</button>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+<!-- SweetAlert2 Script for Flash Messages -->
+<script>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  {% if category == 'success' %}
+  Swal.fire({
+    title: 'Success!',
+    text: '{{ message }}',
+    icon: 'success',
+    confirmButtonText: 'OK'
+  });
+  {% endif %}
+  {% endfor %}
+  {% endwith %}
+</script>
+
+<script>
+  // JavaScript to update the total amount based on selected plan
+  document.getElementById("payment_plan").addEventListener("change", function() {
+    var selectedAmount = parseInt(this.value); // Convert to integer
+    document.getElementById("total_amount").innerText = "₱" + selectedAmount.toLocaleString(); // Format to display with commas
+  });
+</script>

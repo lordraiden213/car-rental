@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Booking Fill-Up - Thrifty Road{% endblock %}
+
+{% block content %}
+<section class="choose__container" id="booking">
+  <div class="choose__image">
+    <img src="{{ url_for('static', filename='uploads/vehicles/' + vehicle.image_url) }}" alt="{{ vehicle.model }}" class="vehicle-image">
+  </div>
+  <div class="choose__content">
+    <div class="user-details-box">
+      <h2>Booking Details</h2>
+      <table>
+        <tr><th>Vehicle</th><td>{{ vehicle.model }}</td></tr>
+        <tr><th>Price</th><td>₱{{ discounted_price }}</td></tr>
+        <tr><th>Discount</th><td>{{ discount_percentage }}%</td></tr>
+      </table>
+      <form action="{{ url_for('process_booking_payment', vehicles_id=vehicle.id) }}" method="POST">
+        <div class="payment-section">
+          <h3>Select a Payment Method</h3>
+          <div class="payment-options">
+            <label for="payment_method">Payment Method:</label>
+            <select name="payment_method" id="payment_method" required>
+              <option value="" disabled selected>Select a method</option>
+              <option value="gcash">GCash</option>
+              <option value="paypal">PayPal</option>
+              <option value="cash on cashier">Cash on Cashier</option>
+            </select>
+          </div>
+        </div>
+        <Br>
+        <button type="submit" class="btn">Book This Vehicle</button>
+      </form>
+
+      <button class="back-btn" onclick="history.back()">Back</button>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #ffffff;
+            padding: 40px 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        p {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        img {
+            margin-top: 20px;
+            width: 200px;
+            height: 200px;
+            border: 4px solid #3498db;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #fff;
+        }
+        a.button {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+        a.button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Booking Confirmed!</h2>
+        <p><strong>Vehicle:</strong> {{ qr.vehicle }}</p>
+        <p><strong>Start Date:</strong> {{ qr.start_date }}</p>
+        <p><strong>Return Date:</strong> {{ qr.return_date }}</p>
+        <p><strong>Discounted Price:</strong> ₱{{ qr.discounted_price }}</p>
+        <p><strong>Discount:</strong> {{ qr.discount }}%</p>
+        <img src="data:image/png;base64,{{ qr.qr_code }}" alt="Booking QR Code" />
+        <br>
+        <a href="{{ url_for('deals') }}" class="button">Back to Deals</a>
+    </div>
+</body>
+</html>

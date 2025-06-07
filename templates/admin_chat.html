@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with {{ user_email }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <style>
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            .chat-container {
+                padding: 15px;
+            }
+            #messages {
+                height: 300px;
+            }
+            #message {
+                height: 35px;
+                font-size: 13px;
+            }
+            button {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+    
+        .chat-container {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    
+        #messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+    
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+    
+        .message-bubble {
+            padding: 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: 70%;
+            word-wrap: break-word;
+            display: inline-block;
+        }
+    
+        .message.user .message-bubble {
+            background-color: #e5e5ea;
+            color: #000;
+            margin-right: auto;
+            align-self: flex-start;
+        }
+    
+        .message.admin .message-bubble {
+            background-color: #4caf50;
+            color: white;
+            margin-left: auto;
+            align-self: flex-end;
+        }
+    
+        .sender-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+    
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+    
+        .input-box {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+    
+        #message {
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            resize: none;
+            height: 40px;
+            margin-right: 10px;
+        }
+    
+        button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    
+        button:hover {
+            background-color: #43a047;
+        }
+    
+        #typing-indicator {
+            font-size: 13px;
+            color: gray;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            height: 15px;
+        }
+    
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #4caf50;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <nav class="sidebar">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+            <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+            <li><a href="{{ url_for('post_vehicle') }}">Post Vehicle</a></li>
+            <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+            <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+            <li><a href="{{ url_for('manage_queries') }}" class="active">Manage Queries</a></li>
+            <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+            <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-content">
+        <div class="chat-container">
+            <h1>Chat with {{ user_email }}</h1>
+
+            <div id="messages" class="messages-box"></div>
+            <div id="typing-indicator"></div>
+
+            <div class="input-box">
+                <textarea id="message" placeholder="Type your message..." onkeydown="handleKeyDown(event)"></textarea>
+                <button onclick="sendMessage()">Send</button>
+            </div>
+
+            <a href="{{ url_for('manage_queries') }}" class="back-btn">Back</a>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+<script>
+    const socket = io();
+    const room = `chat_{{ user_id }}_{{ admin_id }}`;
+
+    socket.on('connect', () => {
+        socket.emit('join', { room: room });
+        console.log(`Admin joined room: ${room}`);
+    });
+
+    // Display previous messages
+    const previousMessages = {{ messages|tojson }};
+    previousMessages.forEach(msg => {
+        appendMessage(
+            msg.sender_type || msg.sender, 
+            msg.message || msg.text, 
+            msg.email,
+            msg.created_at || new Date().toISOString()
+        );
+    });
+
+    // Handle incoming messages
+    socket.on('private_message', function(msg) {
+        console.log('Admin received private message:', msg);
+        const sender = msg.sender || 'user';
+        const text = msg.text || msg;
+        const email = msg.email || '';
+
+        appendMessage(sender, text, email, msg.created_at);
+    });
+
+    // Handle typing indicators
+    socket.on('typing', function(data) {
+        const typingDiv = document.getElementById('typing-indicator');
+        typingDiv.textContent = data.typing ? 
+            `${data.sender === 'admin' ? 'Admin' : 'User'} is typing...` : '';
+    });
+
+    function sendMessage() {
+        const messageInput = document.getElementById('message');
+        const message = messageInput.value.trim();
+
+        if (message) {
+            const user_id = "{{ user_id }}";
+            const admin_id = "{{ admin_id }}";
+            const admin_email = "{{ admin_email }}";
+
+            socket.emit('private_message', {
+                sender: 'admin',
+                text: message,
+                room: room,
+                user_id: user_id,
+                email: admin_email
+            });
+
+            messageInput.value = '';
+        }
+    }
+
+    function appendMessage(sender, text, email = '', timestamp = '') {
+        const messagesBox = document.getElementById('messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender === 'user' ? 'user' : 'admin');
+
+        if (email) {
+            const senderLabel = document.createElement('small');
+            senderLabel.textContent = email;
+            senderLabel.style.display = 'block';
+            senderLabel.style.fontSize = '12px';
+            senderLabel.style.marginBottom = '2px';
+            messageDiv.appendChild(senderLabel);
+        }
+
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('message-bubble');
+        messageBubble.textContent = text;
+
+        // Append the time next to the message
+        if (timestamp) {
+            const timeLabel = document.createElement('small');
+            timeLabel.textContent = formatTime(timestamp);
+            timeLabel.style.fontSize = '10px';
+            timeLabel.style.color = 'gray';
+            timeLabel.style.marginLeft = '5px';
+            messageBubble.appendChild(timeLabel);
+        }
+
+        messageDiv.appendChild(messageBubble);
+        messagesBox.appendChild(messageDiv);
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+
+    function formatTime(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Typing indicator
+    const messageInput = document.getElementById('message');
+    let typingTimeout;
+    messageInput.addEventListener('input', () => {
+        socket.emit('typing', { 
+            sender: 'admin', 
+            typing: true,
+            room: room
+        });
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            socket.emit('typing', { 
+                sender: 'admin', 
+                typing: false,
+                room: room
+            });
+        }, 1000);
+    });
+
+    // Handle Enter key press
+    function handleKeyDown(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            sendMessage();
+        }
+    }
+</script>
+        
+
+</body>
+</html>

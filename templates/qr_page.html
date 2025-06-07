@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Code Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #4CAF50;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 80%;
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .container p {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        .container img {
+            margin: 20px 0;
+            width: 150px;
+            height: 150px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button a {
+            color: white;
+            text-decoration: none;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Payment Confirmation</h2>
+        <p>Plan Duration: <strong>{{ plan }} months</strong></p>
+        <p>Amount Paid: <strong>₱{{ amount }}</strong></p>
+        <p>Discount Applied: <strong>{{ discount }}%</strong></p>
+        <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code">
+        <br>
+        <button><a href="/choose">Back</a></button>
+    </div>
+</body>
+</html>

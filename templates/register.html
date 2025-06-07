@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <nav class="nav-container">
+        <ul class="nav__links" id="nav-links">
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('about') }}">About</a></li>
+            <li><a href="{{ url_for('deals') }}">Rental Deals</a></li>
+            <li><a href="{{ url_for('choose') }}">Why Choose Us</a></li>
+            <li><a href="{{ url_for('clients') }}">Testimonials</a></li>
+
+            {% if session.get('user_id') %}
+                <li><a href="{{ url_for('update_profile') }}">Update Profile</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('login') }}">Login</a></li>
+                <li><a href="{{ url_for('register') }}">Register</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="form-box">
+            <h2 class="form-title">Register</h2>
+            <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data">
+                <div class="form-page">
+                    <div class="input-group">
+                        <i class="ri-user-line"></i>
+                        <input type="text" id="firstname" name="firstname" placeholder="First Name" 
+                               value="{{ firstname if firstname else '' }}" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="ri-user-line"></i>
+                        <input type="text" id="lastname" name="lastname" placeholder="Last Name" 
+                               value="{{ lastname if lastname else '' }}" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="ri-mail-line"></i>
+                        <input type="email" id="email" name="email" placeholder="Email" 
+                               value="{{ email if email else '' }}" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="ri-lock-line"></i>
+                        <input type="password" id="password" name="password" placeholder="Password" required>
+                        <i class="ri-eye-line" id="eye-icon-password" onclick="togglePassword('password', 'eye-icon-password')"></i>
+                    </div>
+                    
+                    <div class="input-group">
+                        <i class="ri-lock-line"></i>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required>
+                        <i class="ri-eye-line" id="eye-icon-confirm" onclick="togglePassword('confirm_password', 'eye-icon-confirm')"></i>
+                    </div>
+                    
+                </div>
+                
+                <div class="form-page">
+                    <div class="input-group">
+                        <i class="ri-calendar-line"></i>
+                        <label for="birthday">Birthday</label>
+                        <input type="date" id="birthday" name="birthday" required>
+                        <input type="hidden" id="age" name="age">
+                    </div>
+                    <div class="input-group">
+                        <div class="input-group">
+                            <label for="age: "></label>
+                            <span id="age-display">Age Will Display Here!</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <i class="ri-phone-line"></i>
+                        <div class="phone-input-container">
+                            <div class="country-code-wrapper">
+                                <span id="country-code-display">+63</span>
+                                <select id="country-code" name="country_code" class="country-code-select">
+                                    <option value="63" selected>Philippines (+63)</option>
+                                    <option value="1">US/Canada (+1)</option>
+                                    <option value="44">UK (+44)</option>
+                                    <option value="81">Japan (+81)</option>
+                                    <option value="82">South Korea (+82)</option>
+                                    <option value="65">Singapore (+65)</option>
+                                </select>
+                            </div>
+                            <input type="text" id="phone" name="phone" placeholder="9123456789" class="phone-number-input" required>
+                            <input type="hidden" name="phone" id="phoner">
+                        </div>
+                    </div>
+                    
+                    <style>
+                        .phone-input-container {
+                            display: flex;
+                            align-items: center;
+                            width: 100%;
+                            border: 1px solid #ddd;
+                            border-radius: 5px;
+                            overflow: hidden;
+                        }
+                        
+                        .country-code-wrapper {
+                            position: relative;
+                            display: flex;
+                            align-items: center;
+                            background: #f5f5f5;
+                            padding: 0 10px;
+                            border-right: 1px solid #ddd;
+                        }
+                        
+                        #country-code-display {
+                            font-weight: bold;
+                            padding: 10px 0;
+                        }
+                        
+                        .country-code-select {
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 100%;
+                            height: 100%;
+                            opacity: 0;
+                            cursor: pointer;
+                        }
+                        
+                        .phone-number-input {
+                            flex: 1;
+                            border: none;
+                            padding: 10px;
+                            outline: none;
+                        }
+                    </style>
+                    
+                    <script>
+                        const countryCodeSelect = document.getElementById('country-code');
+                        const countryCodeDisplay = document.getElementById('country-code-display');
+                        const phoneInput = document.getElementById('phone');
+                        const fullPhoneNumber = document.getElementById('full-phone-number');
+                    
+                        // Country-specific phone number rules
+                        const phoneRules = {
+                            '63': { // Philippines
+                                startsWith: '9',
+                                minLength: 10,
+                                maxLength: 10,
+                                example: '9123456789'
+                            },
+                            '1': { // US/Canada
+                                startsWith: '1',
+                                minLength: 10,
+                                maxLength: 10,
+                                example: '5551234567'
+                            },
+                            '44': { // UK
+                                startsWith: '44',
+                                minLength: 10,
+                                maxLength: 10,
+                                example: '7123456789'
+                            },
+                            '81': { // Japan
+                                startsWith: '81',
+                                minLength: 10,
+                                maxLength: 11,
+                                example: '9012345678'
+                            },
+                            '82': { // South Korea
+                                startsWith: '82',
+                                minLength: 9,
+                                maxLength: 11,
+                                example: '102345678'
+                            },
+                            '65': { // Singapore
+                                startsWith: '65',
+                                minLength: 8,
+                                maxLength: 8,
+                                example: '81234567'
+                            }
+                        };
+                    
+                        // Update displayed country code
+                        countryCodeSelect.addEventListener('change', function() {
+                            countryCodeDisplay.textContent = `+${this.value}`;
+                            updatePhonePlaceholder();
+                        });
+                    
+                        // Format phone number input
+                        phoneInput.addEventListener('input', function() {
+                            const countryCode = countryCodeSelect.value;
+                            const rules = phoneRules[countryCode];
+                            
+                            // Remove all non-digit characters
+                            let value = this.value.replace(/\D/g, '');
+                            
+                            // Limit length
+                            value = value.substring(0, rules.maxLength);
+                            
+                            // For Philippines, ensure it starts with 9
+                            if (countryCode === '63' && value.length > 0 && !value.startsWith('9')) {
+                                value = '9' + value;
+                            }
+                            
+                            this.value = value;
+                            fullPhoneNumber.value = `+${countryCode}${value}`;
+                        });
+                    
+                        function updatePhonePlaceholder() {
+                            const countryCode = countryCodeSelect.value;
+                            phoneInput.placeholder = phoneRules[countryCode].example;
+                        }
+                    
+                        // Initialize
+                        updatePhonePlaceholder();
+                    </script>
+                    <div class="input-group">
+                        <i class="ri-map-pin-line"></i>
+                        <label for="province">Province</label>
+                        <select id="province" name="province" required>
+                            <option value="" disabled selected>Select Province</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <i class="ri-map-pin-line"></i>
+                        <label for="city">City/Municipality</label>
+                        <select id="city" name="city" required>
+                            <option value="" disabled selected>Select City/Municipality</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <i class="ri-map-pin-line"></i>
+                        <label for="barangay">Barangay</label>
+                        <select id="barangay" name="barangay" required>
+                            <option value="" disabled selected>Select Barangay</option>
+                        </select>
+                    </div>
+                    <div class="input-group file-upload">
+                        <label for="profile_picture" class="file-label">
+                            <i class="ri-image-line"></i> Choose a Profile Picture
+                        </label>
+                        <input type="file" id="profile_picture" name="profile_picture" accept=".jpg, .jpeg, .png">
+                    </div>
+                    
+                    <div class="input-group file-upload">
+                        <label for="license_image" class="file-label">
+                            <i class="ri-id-card-line"></i> Upload Driver's License
+                        </label>
+                        <input type="file" id="license_image" name="license_image" accept=".jpg, .jpeg, .png">
+                    </div>                    
+                </div>
+
+                <div class="button-group">
+                    <button type="button" id="prev-btn">Back</button>
+                    <button type="button" id="next-btn">Next</button>
+                    <button type="submit" id="submit-btn">Register</button>
+                </div>
+            </form>
+
+            <p class="login-text">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Thrifty Road</p>
+    </footer>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        Swal.fire({
+                            title: "{{ 'Success!' if category == 'success' else 'Error!' }}",
+                            text: "{{ message }}",
+                            icon: "{{ category }}",
+                            confirmButtonText: "OK"
+                        });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
+    </script>
+    
+    <script>
+        function togglePassword(inputId, iconId) {
+            const passwordField = document.getElementById(inputId);
+            const eyeIcon = document.getElementById(iconId);
+    
+            if (passwordField.type === "password") {
+                passwordField.type = "text"; // Show password
+                eyeIcon.classList.replace("ri-eye-line", "ri-eye-off-line");
+            } else {
+                passwordField.type = "password"; // Hide password
+                eyeIcon.classList.replace("ri-eye-off-line", "ri-eye-line");
+            }
+        }
+    </script>
+   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function saveFormData() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            const formData = {
+                firstname: document.getElementById('firstname').value,
+                lastname: document.getElementById('lastname').value,
+                email: document.getElementById('email').value,
+                birthday: document.getElementById('birthday').value,
+                phone: document.getElementById('phone').value,
+                province: document.getElementById('province').value,
+                city: document.getElementById('city').value,
+                barangay: document.getElementById('barangay').value
+            };
+    
+            // I-save lang ang passwords KAPAG match at may laman
+            if (password && password === confirmPassword) {
+                formData.password = password;
+                formData.confirm_password = confirmPassword;
+            }
+    
+            sessionStorage.setItem('registerFormData', JSON.stringify(formData));
+        }
+    
+        // Function para i-load ang saved data (with password protection)
+        function loadFormData() {
+            const savedData = sessionStorage.getItem('registerFormData');
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                
+                // I-load ang regular fields
+                document.getElementById('firstname').value = formData.firstname || '';
+                document.getElementById('lastname').value = formData.lastname || '';
+                document.getElementById('email').value = formData.email || '';
+                document.getElementById('birthday').value = formData.birthday || '';
+                document.getElementById('phone').value = formData.phone || '';
+                
+                // Special handling for passwords
+                const passwordField = document.getElementById('password');
+                const confirmField = document.getElementById('confirm_password');
+                
+                if (formData.password && formData.confirm_password && 
+                    formData.password === formData.confirm_password) {
+                    passwordField.value = formData.password;
+                    confirmField.value = formData.confirm_password;
+                } else {
+                    passwordField.value = '';
+                    confirmField.value = '';
+                }
+    
+                // Trigger age calculation
+                if (formData.birthday) {
+                    document.getElementById('birthday').dispatchEvent(new Event('change'));
+                }
+                
+                // I-load ang location dropdowns
+                if (formData.province) {
+                    document.getElementById('province').value = formData.province;
+                    setTimeout(() => {
+                        document.getElementById('province').dispatchEvent(new Event('change'));
+                        
+                        setTimeout(() => {
+                            if (formData.city) {
+                                document.getElementById('city').value = formData.city;
+                                document.getElementById('city').dispatchEvent(new Event('change'));
+                                
+                                if (formData.barangay) {
+                                    setTimeout(() => {
+                                        document.getElementById('barangay').value = formData.barangay;
+                                    }, 500);
+                                }
+                            }
+                        }, 500);
+                    }, 500);
+                }
+            }
+        }
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const matchError = document.getElementById('password-match-error');
+            
+            if (password && confirmPassword && password !== confirmPassword) {
+                if (!matchError) {
+                    const errorElement = document.createElement('div');
+                    errorElement.id = 'password-match-error';
+                    errorElement.style.color = 'red';
+                    errorElement.textContent = 'Passwords do not match!';
+                    document.getElementById('confirm_password').after(errorElement);
+                }
+                return false;
+            } else {
+                if (matchError) matchError.remove();
+                return true;
+            }
+        }
+    
+        // Event listeners
+        document.getElementById('password').addEventListener('input', function() {
+            checkPasswordMatch();
+            saveFormData();
+        });
+        
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            checkPasswordMatch();
+            saveFormData();
+        });
+    
+        // Auto-save for other fields
+        const otherFields = document.querySelectorAll('input:not([type="password"]), select');
+        otherFields.forEach(field => {
+            field.addEventListener('input', saveFormData);
+            field.addEventListener('change', saveFormData);
+        });
+    
+        // Initial load
+        loadFormData();
+    
+        // Clear storage on successful submission
+        document.querySelector('form').addEventListener('submit', function() {
+            sessionStorage.removeItem('registerFormData');
+        });
+    
+        // Existing eye toggle function
+        window.togglePassword = function(inputId, iconId) {
+            const field = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            field.type = field.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('ri-eye-line');
+            icon.classList.toggle('ri-eye-off-line');
+        };
+    });
+    
+    </script>
+   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Reference to form elements
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const formPages = document.querySelectorAll('.form-page');
+        let currentPage = 0;
+
+        // Function to validate required fields on page 1
+        function validatePage1() {
+            const firstname = document.getElementById('firstname').value;
+            const lastname = document.getElementById('lastname').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            const emailRegex = /^[a-zA-Z0-9._%+-]{5,}@gmail\.com$/;
+
+            const allFilled = [
+                document.getElementById('firstname'),
+                document.getElementById('lastname'),
+                document.getElementById('email'),
+                document.getElementById('password'),
+                document.getElementById('confirm_password')
+            ].every(field => field.value.trim() !== '');
+
+            const passwordMatch = password === confirmPassword;
+            const passwordLongEnough = password.length >= 8;
+            const nameValid = firstname.length >= 3 && lastname.length >= 3;
+            const emailValid = emailRegex.test(email);
+
+            return allFilled && passwordMatch && passwordLongEnough && nameValid && emailValid;
+        }
+
+        // Next button click handler
+        nextBtn.addEventListener('click', function() {
+            const firstname = document.getElementById('firstname').value;
+            const lastname = document.getElementById('lastname').value;
+            const password = document.getElementById('password').value;
+
+            if (currentPage === 0 && !validatePage1()) {
+                let errorMsg = 'Please complete all fields and ensure passwords match.';
+
+                if (firstname.length < 3 || lastname.length < 3) {
+                    errorMsg = 'Firstname and Lastname must contain at least 3 characters.';
+                } else if (password.length < 8) {
+                    errorMsg = 'Password must be at least 8 characters long.';
+                }
+
+                Swal.fire({
+                    title: 'Incomplete Form',
+                    text: errorMsg,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            formPages[currentPage].style.display = 'none';
+            currentPage++;
+            formPages[currentPage].style.display = 'block';
+
+            prevBtn.style.display = 'inline-block';
+            nextBtn.style.display = currentPage < formPages.length - 1 ? 'inline-block' : 'none';
+            submitBtn.style.display = currentPage === formPages.length - 1 ? 'inline-block' : 'none';
+        });
+
+        // Previous button click handler
+        prevBtn.addEventListener('click', function() {
+            formPages[currentPage].style.display = 'none';
+            currentPage--;
+            formPages[currentPage].style.display = 'block';
+
+            prevBtn.style.display = currentPage > 0 ? 'inline-block' : 'none';
+            nextBtn.style.display = 'inline-block';
+            submitBtn.style.display = 'none';
+        });
+
+        // Initialize form
+        function initForm() {
+            formPages.forEach((page, index) => {
+                page.style.display = index === 0 ? 'block' : 'none';
+            });
+            prevBtn.style.display = 'none';
+            submitBtn.style.display = 'none';
+        }
+        initForm();
+
+        // Real-time validation for password fields
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+
+            if (password && confirmPassword && password !== confirmPassword) {
+                this.setCustomValidity("Passwords don't match");
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Real-time Next button state based on inputs
+        const requiredFields = [
+            document.getElementById('firstname'),
+            document.getElementById('lastname'),
+            document.getElementById('email'),
+            document.getElementById('password'),
+            document.getElementById('confirm_password')
+        ];
+
+        function checkRequiredFields() {
+            const allFilled = requiredFields.every(field => field.value.trim() !== '');
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const passwordsMatch = password === confirmPassword;
+            const passwordLongEnough = password.length >= 8;
+            const firstname = document.getElementById('firstname').value;
+            const lastname = document.getElementById('lastname').value;
+            const nameValid = firstname.length >= 3 && lastname.length >= 3;
+            const email = document.getElementById('email').value;
+            const emailValid = /^[a-zA-Z0-9._%+-]{5,}@(gmail\.com|yahoo\.com|hotline\.com)$/.test(email);
+
+            if (allFilled && passwordsMatch && passwordLongEnough && nameValid && emailValid) {
+                nextBtn.disabled = false;
+                nextBtn.classList.remove("disabled-btn");
+            } else {
+                nextBtn.disabled = true;
+                nextBtn.classList.add("disabled-btn");
+            }
+        }
+
+        requiredFields.forEach(field => {
+            field.addEventListener('input', checkRequiredFields);
+        });
+
+        // Initial check
+        checkRequiredFields();
+
+        // Auto uppercase first letter for Firstname and Lastname fields
+        document.getElementById('firstname').addEventListener('input', function() {
+            let value = this.value;
+            this.value = value.charAt(0).toUpperCase() + value.slice(1);
+        });
+
+        document.getElementById('lastname').addEventListener('input', function() {
+            let value = this.value;
+            this.value = value.charAt(0).toUpperCase() + value.slice(1);
+        });
+
+        // Clear the form after successful registration
+        submitBtn.addEventListener('click', function() {
+            const firstname = document.getElementById('firstname').value;
+            const lastname = document.getElementById('lastname').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            // Example of clearing the form (submit action after validation)
+            if (firstname && lastname && email && password && confirmPassword) {
+                Swal.fire({
+                    title: 'Registration Successful!',
+                    text: 'Your account has been created.',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    // Clear all fields after successful registration
+                    document.getElementById('firstname').value = '';
+                    document.getElementById('lastname').value = '';
+                    document.getElementById('email').value = '';
+                    document.getElementById('password').value = '';
+                    document.getElementById('confirm_password').value = '';
+
+                    // Reset the form page to the first page
+                    currentPage = 0;
+                    formPages.forEach((page, index) => {
+                        page.style.display = index === 0 ? 'block' : 'none';
+                    });
+                    prevBtn.style.display = 'none';
+                    submitBtn.style.display = 'none';
+                });
+            }
+        });
+    });
+</script>
+
+     
+<style>
+    .disabled-btn {
+        background-color: #cccccc !important;
+        color: #666666 !important;
+        cursor: not-allowed !important;
+        opacity: 0.6;
+    }
+    </style>
+        
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const birthdayInput = document.getElementById("birthday");
+    const ageDisplay = document.getElementById("age-display");
+    const ageInput = document.getElementById("age");  // Hidden field for backend
+    
+    birthdayInput.addEventListener("change", function() {
+        const birthday = new Date(this.value);
+        const today = new Date();
+        let age = today.getFullYear() - birthday.getFullYear();
+        const monthDifference = today.getMonth() - birthday.getMonth();
+    
+        if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthday.getDate())) {
+            age--;
+        }
+    
+        // Update the hidden age input for backend
+        ageInput.value = age;  
+    
+        if (age >= 18) {
+            ageDisplay.textContent = `Your Age is: ${age}`;
+        } else {
+            ageDisplay.textContent = "You must be at least 18 years old to register.";
+        }
+    });
+    
+    document.querySelector("form").addEventListener("submit", function(event) {
+        const age = document.getElementById("age").value;
+    
+        // Ensure age is properly checked before form submission
+        if (age === "" || parseInt(age) < 18) {
+            event.preventDefault();
+            Swal.fire({
+                title: "Error!",
+                text: "You must be at least 18 years old to register.",
+                icon: "error",
+                confirmButtonText: "OK"
+            });
+        }
+    });
+});
+    </script>
+
+    <script src="{{ url_for('static', filename='js/location.js') }}"></script>
+    <script>document.addEventListener("DOMContentLoaded", function () {
+        const provinceSelect = document.getElementById("province");
+        const citySelect = document.getElementById("city");
+        const barangaySelect = document.getElementById("barangay");
+
+        // Fetch locations from the backend
+        fetch("/get_locations")
+            .then(response => response.json())
+            .then(data => {
+                // Populate provinces
+                for (const regionCode in data) {
+                    const region = data[regionCode];
+                    for (const province in region.province_list) {
+                        const option = document.createElement("option");
+                        option.value = province;
+                        option.textContent = province;
+                        provinceSelect.appendChild(option);
+                    }
+                }
+            })
+            .catch(error => console.error("Error fetching locations:", error));
+
+        // Update cities based on selected province
+        provinceSelect.addEventListener("change", function () {
+            const selectedProvince = provinceSelect.value;
+            citySelect.innerHTML = '<option value="" disabled selected>Select City/Municipality</option>';
+            barangaySelect.innerHTML = '<option value="" disabled selected>Select Barangay</option>';
+
+            fetch("/get_locations")
+                .then(response => response.json())
+                .then(data => {
+                    for (const regionCode in data) {
+                        const region = data[regionCode];
+                        if (region.province_list[selectedProvince]) {
+                            const cities = region.province_list[selectedProvince].municipality_list;
+                            for (const city in cities) {
+                                const option = document.createElement("option");
+                                option.value = city;
+                                option.textContent = city;
+                                citySelect.appendChild(option);
+                            }
+                        }
+                    }
+                })
+                .catch(error => console.error("Error fetching cities:", error));
+        });
+
+        // Update barangays based on selected city
+        citySelect.addEventListener("change", function () {
+            const selectedProvince = provinceSelect.value;
+            const selectedCity = citySelect.value;
+            barangaySelect.innerHTML = '<option value="" disabled selected>Select Barangay</option>';
+
+            fetch("/get_locations")
+                .then(response => response.json())
+                .then(data => {
+                    for (const regionCode in data) {
+                        const region = data[regionCode];
+                        if (region.province_list[selectedProvince]) {
+                            const barangays = region.province_list[selectedProvince].municipality_list[selectedCity].barangay_list;
+                            for (const barangay of barangays) {
+                                const option = document.createElement("option");
+                                option.value = barangay;
+                                option.textContent = barangay;
+                                barangaySelect.appendChild(option);
+                            }
+                        }
+                    }
+                })
+                .catch(error => console.error("Error fetching barangays:", error));
+        });
+    });
+    </script>
+
+</body>
+</html>

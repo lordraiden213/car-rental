@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manage Bookings</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      color: #333;
+    }
+
+    .dashboard-container {
+      display: flex;
+      height: 100vh;
+    }
+
+    nav.sidebar {
+      width: 220px;
+      background-color: #2c3e50;
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    nav.sidebar h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      font-size: 1.5rem;
+      border-bottom: 2px solid #2980b9;
+      padding-bottom: 10px;
+    }
+
+    nav.sidebar ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+      flex-grow: 1;
+    }
+
+    nav.sidebar ul li {
+      margin-bottom: 12px;
+    }
+
+    nav.sidebar ul li a {
+      color: #bdc3c7;
+      text-decoration: none;
+      font-weight: 600;
+      display: block;
+      padding: 8px 12px;
+      border-radius: 5px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    nav.sidebar ul li a:hover,
+    nav.sidebar ul li a.active {
+      background-color: #2980b9;
+      color: white;
+      font-weight: 700;
+    }
+
+    .main-container {
+      flex-grow: 1;
+      padding: 25px 30px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background-color: white;
+      box-shadow: inset 0 0 10px #ddd;
+    }
+
+    .main-container h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-weight: 700;
+      font-size: 2rem;
+      color: #2980b9;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .top-controls {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .top-controls select {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .top-controls select:hover,
+    .top-controls select:focus {
+      border-color: #2980b9;
+      outline: none;
+      box-shadow: 0 0 8px rgba(41, 128, 185, 0.4);
+    }
+
+    .booking-scrollable {
+      flex-grow: 1;
+      overflow-y: auto;
+      max-height: 80vh;
+      padding-right: 12px;
+    }
+
+    .booking-scrollable::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .booking-scrollable::-webkit-scrollbar-thumb {
+      background-color: #2980b9;
+      border-radius: 4px;
+    }
+
+    .booking-card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      background-color: #fafafa;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .booking-card:hover {
+      box-shadow: 0 5px 15px rgba(41, 128, 185, 0.3);
+    }
+
+    .booking-header {
+      background-color: #2980b9;
+      color: white;
+      padding: 15px 20px;
+      cursor: pointer;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 10px 10px 0 0;
+      user-select: none;
+      font-size: 1.1rem;
+      letter-spacing: 0.03em;
+      transition: background-color 0.3s;
+    }
+
+    .booking-header:hover {
+      background-color: #1c5980;
+    }
+
+    .booking-header span {
+      background-color: rgba(255,255,255,0.3);
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 0.85rem;
+      text-transform: capitalize;
+      letter-spacing: 0.02em;
+      min-width: 100px;
+      text-align: center;
+      user-select: none;
+    }
+
+    .booking-details {
+      padding: 15px 25px;
+      background-color: white;
+      border-radius: 0 0 10px 10px;
+      display: none;
+      font-size: 0.95rem;
+      color: #444;
+      line-height: 1.5;
+    }
+
+    .booking-details.open {
+      display: block;
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    /* Table Styles */
+    table.details-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table.details-table th,
+    table.details-table td {
+      border: 1px solid #ddd;
+      padding: 10px 14px;
+      text-align: left;
+      vertical-align: middle;
+      word-wrap: break-word;
+    }
+
+    table.details-table th {
+      background-color: #2980b9;
+      color: white;
+      font-weight: 600;
+      width: 180px;
+      user-select: none;
+    }
+
+    table.details-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    /* Buttons */
+    .return-btn, .approve-btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background-color 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .return-btn {
+      background-color: #27ae60;
+    }
+
+    .return-btn:hover {
+      background-color: #1e8449;
+    }
+
+    .approve-btn {
+      background-color: #2980b9;
+    }
+
+    .approve-btn:hover {
+      background-color: #1c5980;
+    }
+
+    /* Pagination */
+    .pagination-controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+      gap: 12px;
+    }
+
+    .pagination-controls button {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 8px;
+      background-color: #2980b9;
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+      box-shadow: 0 3px 7px rgba(41, 128, 185, 0.4);
+    }
+
+    .pagination-controls button:hover:not(:disabled) {
+      background-color: #1c5980;
+    }
+
+    .pagination-controls button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+      box-shadow: none;
+      color: #666;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      nav.sidebar {
+        width: 180px;
+        padding: 15px;
+      }
+      .main-container {
+        padding: 20px 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      nav.sidebar {
+        display: none;
+      }
+      .dashboard-container {
+        flex-direction: column;
+      }
+      .main-container {
+        padding: 15px 10px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+  <nav class="sidebar">
+    <h2>ManageBookings</h2>
+    <ul>
+      <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+      <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+      <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+      <li><a href="{{ url_for('post_vehicle') }}">Post Vehicle</a></li>
+      <li><a href="{{ url_for('manage_bookings') }}" class="active">Manage Bookings</a></li>
+      <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+      <li><a href="{{ url_for('manage_queries') }}">Manage Queries</a></li>
+      <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+      <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+      <li><a href="{{ url_for('logout') }}">Logout</a></li>
+    </ul>
+  </nav>
+
+  <div class="main-container">
+    <h2>Manage Bookings</h2>
+
+    <div class="top-controls">
+      <select id="itemsPerPageSelect" onchange="changeItemsPerPage()">
+        <option value="5">5 per page</option>
+        <option value="10">10 per page</option>
+        <option value="15">15 per page</option>
+        <option value="20">20 per page</option>
+      </select>
+    </div>
+
+    <div class="booking-scrollable" id="bookingContainer">
+      <!-- Booking cards will be rendered here -->
+    </div>
+
+    <div class="pagination-controls">
+      <button id="prevBtn" onclick="prevPage()">Previous</button>
+      <button id="nextBtn" onclick="nextPage()">Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const bookings = {{ bookings|tojson }};
+  let currentPage = 1;
+  let itemsPerPage = 5;
+
+  function renderBookings() {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const paginated = bookings.slice(start, end);
+
+    const container = document.getElementById('bookingContainer');
+    container.innerHTML = '';
+
+    paginated.forEach(booking => {
+      const card = document.createElement('div');
+      card.className = 'booking-card';
+
+      // Header shows email now
+      const header = document.createElement('div');
+      header.className = 'booking-header';
+      header.innerHTML = `
+        ${booking.email} 
+        <span>${booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
+      `;
+      header.onclick = () => {
+        const details = card.querySelector('.booking-details');
+        details.classList.toggle('open');
+      };
+
+      // Details with table
+      const details = document.createElement('div');
+      details.className = 'booking-details';
+
+      details.innerHTML = `
+        <table class="details-table">
+          <tbody>
+            <tr><th>Name</th><td>${booking.lastname}</td></tr>
+            <tr><th>Phone</th><td>${booking.phone}</td></tr>
+            <tr><th>Province</th><td>${booking.province}</td></tr>
+            <tr><th>City</th><td>${booking.city}</td></tr>
+            <tr><th>Barangay</th><td>${booking.barangay}</td></tr>
+            <tr><th>Start Date</th><td>${booking.start_date}</td></tr>
+            <tr><th>Return Date</th><td>${booking.return_date}</td></tr>
+            <tr><th>Discounted Price</th><td>${booking.discounted_price}</td></tr>
+            <tr><th>Status</th><td>${booking.status === 'completed' ? '✅ Completed (Auto)' : booking.status}</td></tr>
+            <tr><th>Actions</th><td>
+              ${booking.status === 'pending'
+                ? `<form action="/approve_booking/${booking.id}" method="POST" style="display:inline;">
+                    <button type="submit" class="approve-btn">Approve</button>
+                  </form>`
+                : booking.status === 'approved'
+                  ? `<button class="return-btn" onclick="updateStatus(${booking.id}, 'returned')">Mark as Returned</button>`
+                  : '<span style="color: gray;">N/A</span>'}
+            </td></tr>
+          </tbody>
+        </table>
+      `;
+
+      card.appendChild(header);
+      card.appendChild(details);
+      container.appendChild(card);
+    });
+
+    document.getElementById('prevBtn').disabled = currentPage === 1;
+    document.getElementById('nextBtn').disabled = end >= bookings.length;
+  }
+
+  function prevPage() {
+    if (currentPage > 1) {
+      currentPage--;
+      renderBookings();
+    }
+  }
+
+  function nextPage() {
+    if (currentPage * itemsPerPage < bookings.length) {
+      currentPage++;
+      renderBookings();
+    }
+  }
+
+  function changeItemsPerPage() {
+    const selected = document.getElementById('itemsPerPageSelect').value;
+    itemsPerPage = parseInt(selected);
+    currentPage = 1;
+    renderBookings();
+  }
+
+  function updateStatus(bookingId, newStatus) {
+    fetch(`/update_booking_status/${bookingId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      location.reload();
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Something went wrong!");
+    });
+  }
+
+  renderBookings();
+</script>
+
+</body>
+</html>

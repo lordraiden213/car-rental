@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Profile - Thrifty Road{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <button class="tab active" onclick="showSection('profile-info')">
+            <i class="fas fa-user"></i> Profile Information
+        </button>
+        <button class="tab" onclick="showSection('security')">
+            <i class="fas fa-lock"></i> Security
+        </button>
+        <button class="tab" onclick="showSection('license')">
+            <i class="fas fa-id-card"></i> License
+        </button>
+    </div>
+
+    <!-- SweetAlert Notifications -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let messages = {{ messages | tojson | safe }};
+            messages.forEach(([category, message]) => {
+                Swal.fire({
+                    icon: category,
+                    title: message,
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            });
+        });
+    </script>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Profile Information Section -->
+        <div id="profile-info" class="section">
+            <h2>Your Profile Information</h2>
+            <form action="{{ url_for('update_profile') }}" method="POST">
+                <input type="hidden" name="form_type" value="profile">
+                <label for="firstname">First Name:</label>
+                <input type="text" id="firstname" name="firstname" value="{{ user.firstname }}" required>
+                <label for="lastname">Last Name:</label>
+                <input type="text" id="lastname" name="lastname" value="{{ user.lastname }}" required>
+                <label for="birthday">Birthday</label>
+                <input type="date" id="birthday" name="birthday" value="{{ user.birthday }}" required max="{{ max_birthday }}" onchange="validateAgeAndYear()">
+                <div class="input-group">
+                    <div class="input-group">
+                        <label for="age: "></label>
+                        <span id="age-display">Age Will Display Here!</span>
+                    </div>
+                    <br>
+                    <span id="birthday-error" style="color: red; display: none;">Please enter a valid date of birth (at least 18 years old and year 1970+).</span>
+                </div>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                <label for="phone">Phone Number:</label>
+<div class="input-group">
+    <i class="ri-phone-line"></i>
+    <div class="phone-input-container">
+        <div class="country-code-wrapper">
+            <select id="country-code" name="country_code" class="country-code-select" onchange="updatePhoneDisplay()">
+                <option value="63" {% if user.country_code == '63' %}selected{% endif %}>Phil(+63)</option>
+                <option value="1" {% if user.country_code == '1' %}selected{% endif %}>US/ (+1)</option>
+                <option value="44" {% if user.country_code == '44' %}selected{% endif %}>UK (+44)</option>
+                <option value="81" {% if user.country_code == '81' %}selected{% endif %}>Japan (+81)</option>
+                <option value="82" {% if user.country_code == '82' %}selected{% endif %}>South Korea (+82)</option>
+                <option value="65" {% if user.country_code == '65' %}selected{% endif %}>Singapore (+65)</option>
+            </select>
+        </div>
+        <!-- Input for the phone number, without the country code prefix -->
+        <input type="text" id="phone" name="phone" placeholder="9615030769" value="{{ user.phone }}" required>
+    </div>
+</div>
+                <label for="province">Province:</label>
+                <input type="text" id="province" name="province" value="{{ user.province }}" required>
+                <label for="city">City:</label>
+                <input type="text" id="city" name="city" value="{{ user.city }}" required>
+                <label for="barangay">Barangay:</label>
+                <input type="text" id="barangay" name="barangay" value="{{ user.barangay }}" required>
+                <button type="submit" class="btn-primary" id="submit-btn">Update Profile</button>
+            </form>
+        </div>
+
+        <!-- Security Section -->
+        <div id="security" class="section hidden">
+            <h2>Security Settings</h2>
+            <form action="{{ url_for('update_profile') }}" method="POST">
+                <input type="hidden" name="form_type" value="security">
+                
+                <label for="current_password">Current Password:</label>
+                <div class="input-container">
+                    <input type="password" id="current_password" name="current_password" required>
+                    <span class="eye-icon" onclick="togglePasswordVisibility('current_password')">
+                        <i class="fas fa-eye" id="current-password-eye"></i>
+                    </span>
+                </div>
+
+                <label for="new_password">New Password:</label>
+                <div class="input-container">
+                    <input type="password" id="new_password" name="new_password" required>
+                    <span class="eye-icon" onclick="togglePasswordVisibility('new_password')">
+                        <i class="fas fa-eye" id="new-password-eye"></i>
+                    </span>
+                </div>
+
+                <label for="confirm_password">Confirm New Password:</label>
+                <div class="input-container">
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                    <span class="eye-icon" onclick="togglePasswordVisibility('confirm_password')">
+                        <i class="fas fa-eye" id="confirm-password-eye"></i>
+                    </span>
+                </div>
+                <button type="submit" class="btn-primary">Update Security</button>
+            </form>
+        </div>
+
+        <!-- License Upload Section -->
+        <div id="license" class="section hidden">
+            <h2>Upload Profile/Licenses Picture</h2>
+            <form action="{{ url_for('update_profile') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="form_type" value="license">
+                <p>Current Profile Picture:</p>
+                <img src="{{ url_for('static', filename=user.profile_picture.replace('static/', '')) if user.profile_picture else 'uploads/default.jpg' }}" alt="Profile Picture" width="200">
+                <label for="profile_picture">Upload Profile Picture:</label>
+                <input type="file" id="profile_picture" name="profile_picture" accept=".jpg,.jpeg,.png">
+                <p>Current Driver's License:</p>
+                <img src="{{ url_for('static', filename=user.license_image.replace('static/', '')) if user.license_image else 'uploads/default.jpg' }}" alt="License" width="200">
+                <label for="license_pic">Upload Driver's License:</label>
+                <input type="file" id="license_pic" name="license_pic" accept=".jpg,.jpeg,.png">
+                <button type="submit" class="btn-primary">Update Pictures</button>
+            </form>
+        </div>
+    </div>
+    <style>
+        /* Container for the phone number input */
+    .input-group {
+        display: flex;
+        align-items: center;
+        margin: 10px 0;
+        font-family: Arial, sans-serif;
+    }
+    
+    /* Icon before the phone number input */
+    .input-group i {
+        font-size: 20px;
+        color: #555;
+        margin-right: 10px;
+    }
+    
+    /* Phone input container */
+    .phone-input-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 5px;
+        background-color: #fff;
+    }
+    
+    /* Country code wrapper for better alignment */
+    .country-code-wrapper {
+        display: flex;
+        align-items: center;
+        margin-right: 10px;
+    }
+    
+    /* Country code dropdown */
+    .country-code-select {
+        padding: 5px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #fff;
+        color: #555;
+        width: 100px;
+    }
+    
+    /* Phone number input field */
+    .phone-number-input {
+        padding: 8px;
+        font-size: 16px;
+        width: 100%;
+        border: none;
+        outline: none;
+        background-color: transparent;
+        color: #333;
+    }
+    
+    /* Phone number input placeholder */
+    .phone-number-input::placeholder {
+        color: #888;
+    }
+    
+    /* Styles for the label */
+    label {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        display: block;
+    }
+    
+    /* Adding some space around the input elements */
+    input[type="text"], select {
+        margin: 5px;
+    }
+    
+        </style>
+    <script>
+        // Update phone display when the country code is changed
+        function updatePhoneDisplay() {
+            var countryCode = document.getElementById("country-code").value; // Get selected country code
+            var phoneInput = document.getElementById("phone"); // Get phone input element
+            var phoneValue = phoneInput.value.trim(); // Get the current phone number value
+    
+            // If the phone number starts with the previous country code, remove it
+            if (phoneValue.startsWith("+63")) {
+                phoneValue = phoneValue.slice(3).trim(); // Remove +63 if it's already there
+            }
+            if (phoneValue.startsWith("+1")) {
+                phoneValue = phoneValue.slice(2).trim(); // Remove +1 if it's already there
+            }
+            if (phoneValue.startsWith("+44")) {
+                phoneValue = phoneValue.slice(3).trim(); // Remove +44 if it's already there
+            }
+            if (phoneValue.startsWith("+81")) {
+                phoneValue = phoneValue.slice(3).trim(); // Remove +81 if it's already there
+            }
+            if (phoneValue.startsWith("+82")) {
+                phoneValue = phoneValue.slice(3).trim(); // Remove +82 if it's already there
+            }
+            if (phoneValue.startsWith("+65")) {
+                phoneValue = phoneValue.slice(3).trim(); // Remove +65 if it's already there
+            }
+    
+            // Update the phone input value with the new country code and phone number
+            phoneInput.value = phoneValue; // Update phone number input
+            // Update the phone display with the correct country code
+            phoneInput.placeholder = phoneValue; // Update placeholder text
+        }
+    
+        // Call the updatePhoneDisplay function when the page loads to set the correct phone display initially
+        window.onload = function() {
+            updatePhoneDisplay();
+        }
+    </script>
+    <style>
+        .input-container {
+            position: relative;
+            width: 100%;
+        }
+    
+        .eye-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+    
+        .input-container input {
+            width: 100%;
+            padding-right: 30px; /* Ensure space for the eye icon */
+        }
+    </style>
+    
+<script>
+    // Function to calculate age based on birthday
+    function calculateAge(birthday) {
+        const birthDate = new Date(birthday);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const month = today.getMonth();
+        const day = today.getDate();
+        if (month < birthDate.getMonth() || (month === birthDate.getMonth() && day < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    }
+
+    // Validate the year and age: at least 18 years old, and year should be 1990 or higher
+    function validateAgeAndYear() {
+        const birthday = document.getElementById('birthday').value;
+        const age = calculateAge(birthday);
+        const birthYear = new Date(birthday).getFullYear();
+        document.getElementById('age-display').textContent = `Age: ${age}`;
+
+        // Check if the year is 1970 or 20+
+        if (birthYear < 1970) {
+            document.getElementById('birthday-error').style.display = 'inline';
+            document.getElementById('submit-btn').disabled = true;
+        } else if (age < 18) {
+            document.getElementById('birthday-error').style.display = 'inline';
+            document.getElementById('submit-btn').disabled = true;
+        } else {
+            document.getElementById('birthday-error').style.display = 'none';
+            document.getElementById('submit-btn').disabled = false;
+        }
+    }
+
+    // Toggle password visibility
+    function togglePasswordVisibility(inputId) {
+        const inputField = document.getElementById(inputId);
+        const eyeIcon = document.getElementById(inputId + '-eye');
+
+        if (inputField.type === 'password') {
+            inputField.type = 'text';
+            eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            inputField.type = 'password';
+            eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+
+    // Initial display of age if birthday is already filled
+    window.addEventListener('DOMContentLoaded', function() {
+        const birthday = document.getElementById('birthday').value;
+        if (birthday) {
+            const age = calculateAge(birthday);
+            const birthYear = new Date(birthday).getFullYear();
+            document.getElementById('age-display').textContent = `Age: ${age}`;
+            if (birthYear < 1960 || age < 18) {
+                document.getElementById('birthday-error').style.display = 'inline';
+                document.getElementById('submit-btn').disabled = true;
+            }
+        }
+    });
+
+    // Toggle sections
+    function showSection(sectionId) {
+        document.querySelectorAll('.section').forEach(section => {
+            section.classList.add('hidden');
+        });
+        document.getElementById(sectionId).classList.remove('hidden');
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+    }
+</script>
+
+{% endblock %}

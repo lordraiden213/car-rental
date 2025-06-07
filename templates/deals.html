@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}Rental Deals - Thrifty Road{% endblock %}
+{% block content %}
+<section class="deals" id="deals">
+    <h2 class="section__header">Most Popular Car Rental Deals</h2>
+    <p class="section__description">
+        Explore our top car rental deals, handpicked to give you the best value and experience.
+    </p>
+
+    <br>
+    <!-- Brand tabs -->
+    <div class="deals__tabs">
+        {% set unique_brands = vehicles | groupby("brand_name") %}
+        {% for brand, items in unique_brands %}
+            <button class="btn brand-btn {% if loop.first %}active{% endif %}" data-id="{{ brand }}">
+                <i class="fas fa-car"></i> {{ brand }}
+            </button>
+        {% endfor %}
+        <script>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        Swal.fire({
+                            icon: "{{ 'success' if category == 'success' else 'error' }}",
+                            title: "{{ message }}",
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </script>
+    </div>
+    <!-- Vehicle list per brand -->
+    <div id="vehicle-list" class="deals__container">
+        {% for brand, items in unique_brands %}
+            <div id="{{ brand }}" class="tab__content {% if loop.first %}active{% endif %}">
+                {% for car in items %}
+                    <div class="deals__card" id="deal-{{ car.vehicle_id }}">
+                        <img class="deals__img" src="{{ url_for('static', filename='uploads/vehicles/' + car.image_url) }}" alt="{{ car.model }}" />
+                        <div class="deals__rating">
+                            {% set rating = car.average_rating if car.average_rating is not none else 0 %}
+                            {% for i in range(1, 6) %}
+                                {% if i <= rating %}
+                                    <span><i class="ri-star-fill"></i></span>  <!-- Filled Star -->
+                                {% else %}
+                                    <span><i class="ri-star-line"></i></span>  <!-- Empty Star -->
+                                {% endif %}
+                            {% endfor %}
+                        </div>                        
+                                              
+                        <h4>{{ car.model }}</h4>
+                        <div class="deals__card__grid">
+                            <div><span><i class="ri-group-line"></i></span> {{ car.people }} People</div>
+                            <div><span><i class="ri-steering-2-line"></i></span> {{ car.transmission }}</div>
+                            <div><span><i class="ri-speed-up-line"></i></span> {{ car.mileage }} km/l</div>
+                            <div><span><i class="ri-car-line"></i></span> {{ car.gas }}</div>
+                        </div>
+                        <div class="deals__card__footer">
+                            {% if discount > 0 %}
+                                {% set discounted_price = car.price_per_day - (car.price_per_day * discount / 100) %}
+                                <h3>
+                                    <del style="color: #888; font-size: 14px;">₱{{ car.price_per_day }}</del><br>
+                                    ₱{{ discounted_price|round(2) }}<span>/Per Day</span>
+                                    <span style="color: green; font-size: 14px;"> ({{ discount }}% off)</span>
+                                </h3>
+                            {% else %}
+                                <h3>₱{{ car.price_per_day }}<span>/Per Day</span></h3>
+                            {% endif %}
+                            <a href="{{ url_for('add_booking', vehicles_id=car.vehicle_id) }}">View Details</a>
+                            <span><i class="ri-arrow-right-line"></i></span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+</section>
+<script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+<script>
+    var socket = io();
+
+    function getActiveBrandTab() {
+        return document.querySelector('.brand-btn.active')?.dataset.id || null;
+    }
+
+    function groupByBrand(vehicles) {
+        const grouped = {};
+        vehicles.forEach(car => {
+            if (!grouped[car.brand_name]) {
+                grouped[car.brand_name] = [];
+            }
+            grouped[car.brand_name].push(car);
+        });
+        return grouped;
+    }
+    
+
+    function reloadDeals() {
+        const activeTabId = getActiveBrandTab();
+        fetch('/get_deals')
+            .then(response => response.json())
+            .then(data => {
+                const grouped = groupByBrand(data);
+                Object.entries(grouped).forEach(([brand, cars]) => {
+                    const brandTab = document.getElementById(brand);
+                    if (brandTab) {
+                        brandTab.innerHTML = '';
+
+                        cars.forEach(car => {
+                            const newDealCard = document.createElement('div');
+                            newDealCard.classList.add('deals__card');
+                            newDealCard.id = 'deal-' + car.vehicle_id;
+
+                            let priceHTML = '';
+                            if (car.discount > 0) {
+                                const discounted = car.price_per_day - (car.price_per_day * car.discount / 100);
+                                priceHTML = `
+                                    <h3>
+                                        <del style="color: #888; font-size: 14px;">₱${car.price_per_day}</del><br>
+                                        ₱${discounted.toFixed(2)}<span>/Per Day</span>
+                                        <span style="color: green; font-size: 14px;"> (${car.discount}% off)</span>
+                                    </h3>
+                                `;
+                            } else {
+                                priceHTML = `<h3>₱${car.price_per_day}<span>/Per Day</span></h3>`;
+                            }
+
+                            newDealCard.innerHTML = `
+                                <img class="deals__img" src="/static/uploads/vehicles/${car.image_url}" alt="${car.model}" />
+                                <div class="deals__rating">
+                                    ${[1, 2, 3, 4, 5].map(i => {
+                                        const rating = car.average_rating || 0;
+                                        return i <= rating 
+                                            ? '<span><i class="ri-star-fill"></i></span>' 
+                                            : '<span><i class="ri-star-line"></i></span>';
+                                    }).join('')}
+                                </div> 
+                                <h4>${car.model}</h4>
+                                <div class="deals__card__grid">
+                                    <div><span><i class="ri-group-line"></i></span> ${car.people} People</div>
+                                    <div><span><i class="ri-steering-2-line"></i></span> ${car.transmission}</div>
+                                    <div><span><i class="ri-speed-up-line"></i></span> ${car.mileage} km/l</div>
+                                    <div><span><i class="ri-car-line"></i></span> ${car.gas}</div>
+                                </div>
+                                <div class="deals__card__footer">
+                                    ${priceHTML}
+                                    <a href="/add_booking/${car.vehicle_id}">View Details</a>
+                                    <span><i class="ri-arrow-right-line"></i></span>
+                                </div>
+                            `;
+                            brandTab.appendChild(newDealCard);
+                        });
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching new deals:', error));
+    }
+
+    setInterval(() => {
+        reloadDeals();
+    }, 1000);
+
+    let reloadTimeout;
+    socket.on('new_deal', function (car) {
+        const activeBrand = getActiveBrandTab();
+        if (activeBrand && car.brand_name === activeBrand) {
+            clearTimeout(reloadTimeout);
+            reloadTimeout = setTimeout(() => {
+                reloadDeals();
+            }, 300);
+        }
+    });
+</script>
+{% endblock %}

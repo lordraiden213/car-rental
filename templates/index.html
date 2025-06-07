@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Thrifty Road{% endblock %}
+
+{% block content %}
+    <div class="header__container" id="home">
+        <div class="header__image">
+            <img src="{{ url_for('static', filename='img/assets/header.png') }}" alt="header" />
+        </div>
+        <div class="header__content">
+            <h2>👍 100% Trusted car rental platform in Philippines</h2>
+            <h1>FAST AND EASY WAY TO RENT A CAR</h1>
+            <p class="section__description">
+                Discover a seamless car rental experience with us. Choose from a
+                range of premium vehicles to suit your style and needs, and hit the
+                road with confidence. Quick, easy, and reliable - rent your ride
+                today!
+            </p>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            {% with messages = get_flashed_messages(with_categories=True) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        Swal.fire({
+                            title: "{{ 'Success!' if category == 'success' else 'Error!' }}",
+                            text: "{{ message }}",
+                            icon: "{{ category }}",
+                            confirmButtonText: "OK"
+                        });
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        });
+    </script>
+
+    <section class="header__form">
+        <form action="/deals">
+            <div class="input__group">
+                <label for="location">Pick up & Return location</label>
+                <input type="text" name="location" id="location" placeholder="Manila, Philippines"/>
+            </div>
+            <div class="input__group">
+                <label for="start">Pick up date</label>
+                <input type="text" name="start" id="start" placeholder="Aug 16, 10:00 AM"/>
+            </div>
+            <div class="input__group">
+                <label for="stop">Return date</label>
+                <input type="text" name="stop" id="stop" placeholder="Aug 18, 10:00 PM"/>
+            </div>
+            <button class="btn">Search <i class="ri-search-line"></i></button>
+        </form>
+    </section>
+{% endblock %}

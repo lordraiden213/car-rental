@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Subscribers</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <h2>Manage Subscribers</h2>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+                <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+                <li><a href="{{ url_for('post_vehicle') }}">Post Vehicle</a></li>
+                <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+                <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+                <li><a href="{{ url_for('manage_queries') }}">Manage Queries</a></li>
+                <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('manage_subscribers') }}" class="active">Manage Subscribers</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <h2>Manage Subscribers</h2>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <p class="{{ category }}">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Subscription Duration</th>
+                        <th>Subscription Expiry</th>
+                        <th>Amount</th>
+                        <th>Payment Method</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Action</th>  <!-- Added Action column for approving -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subscriber in subscribers %}
+                        <tr>
+                            <td>{{ subscriber.email }}</td>
+                            <td>{{ subscriber.created_at }}</td>
+                            <td>{{ subscriber.subscription_expiry }}</td>
+                            <td>₱{{ subscriber.amount }}</td>
+                            <td>{{ subscriber.payment_method }}</td>
+                            <td>{{ subscriber.duration }} months</td>
+                            <td>{{ subscriber.status|capitalize }}</td>
+                            <td>
+                                {% if subscriber.status == 'pending' %}
+                                    <a href="{{ url_for('approve_payment', payment_id=subscriber.payment_id) }}"
+                                    class="approve-btn">Approve</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </main>
+    </div>
+
+    <style>
+        .approve-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .approve-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <h2>Manage Users</h2>
+            <ul>
+                    <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+                    <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+                    <li><a href="{{ url_for('post_vehicle') }}" >Post Vehicle</a></li>
+                    <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+                    <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+                    <li><a href="{{ url_for('manage_queries') }}">Manage Queries</a></li>
+                    <li><a href="{{ url_for('manage_users') }}" class="active">Manage Users</a></li>
+                    <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                </ul>
+        </nav>
+
+        <div class="main-content">
+            <h1>Manage Users</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let messages = {{ messages | tojson | safe }};
+            messages.forEach(([category, message]) => {
+                let title = message; // Default title is the message itself
+                
+                // If the message is about logout, change the title
+                if (message.toLowerCase().includes("logout")) {
+                    title = "Logout Successful";
+                }
+
+                Swal.fire({
+                    icon: category, 
+                    title: title, 
+                    text: category === "success" && title === "Logout Successful" ? message : "", 
+                    showConfirmButton: false, 
+                    timer: 2000
+                });
+            });
+        });
+    </script>
+    {% endif %}
+{% endwith %}
+
+            
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.firstname }}</td>
+                            <td>{{ user.lastname }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <a href="{{ url_for('view_user', user_id=user.id) }}" class="view-btn">View</a>
+                                <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this user?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Contact</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+                <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+                <li><a href="{{ url_for('post_vehicle') }}">Post Vehicle</a></li>
+                <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+                <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+                <li><a href="{{ url_for('manage_queries') }}">Manage Queries</a></li>
+                <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('update_contact') }}" class="active">Update Contact Details</a></li>
+                <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </nav>
+
+        <section class="main-content">
+            <h2>Update Contact Information</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('update_contact') }}">
+                <label for="email">Email:</label>
+                <input type="email" name="email" value="{{ contact.email }}" required>
+
+                <label for="phone">Phone Number:</label>
+                <input type="text" name="phone" value="{{ contact.phone }}" required>
+
+                <label for="address">Address:</label>
+                <textarea name="address" rows="3" required>{{ contact.address }}</textarea>
+
+                <br><br>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+        </section>
+    </div>
+</body>
+</html>

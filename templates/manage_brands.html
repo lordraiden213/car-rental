@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Brands</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- SweetAlert2 -->
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <h2>Manage Brands</h2>
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_brands') }}" class="active">Manage Vehicle Brands</a></li>
+                <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+                <li><a href="{{ url_for('post_vehicle') }}">Post Vehicle</a></li>
+                <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+                <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+                <li><a href="{{ url_for('manage_queries') }}">Manage Queries</a></li>
+                <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+                <li><a href="#" id="logout-btn">Logout</a></li> <!-- Logout with confirmation -->
+            </ul>
+        </nav>
+
+        <section class="main-content">
+            <h1>Manage Brands</h1>
+
+            <!-- Flash Messages for Notifications -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% set safe_messages = messages | tojson | safe %}
+              <script>
+                  document.addEventListener("DOMContentLoaded", function() {
+                      let messages = {{ safe_messages }};
+                      messages.forEach(function([category, message]) {
+                          let title = message;
+                          if (message.toLowerCase().includes("logout")) {
+                              title = "Logout Successful";
+                          }
+          
+                          Swal.fire({
+                              icon: category,
+                              title: title,
+                              text: category === "success" && title === "Logout Successful" ? message : "",
+                              showConfirmButton: false,
+                              timer: 2000
+                          });
+                      });
+                  });
+              </script>
+            {% endif %}
+          {% endwith %}
+          
+
+
+            <!-- Brand Statistics -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h3>Total Brands</h3>
+                    <p>{{ total_brands }}</p>
+                </div>
+            </div>
+
+            <!-- Form to Add a New Brand -->
+            <div class="form-container-brand">
+                <h3>Add New Brand</h3>
+                <form action="{{ url_for('add_brand') }}" method="POST">
+                    <label for="brand_name">Brand Name:</label>
+                    <input type="text" name="brand_name" required id="brand_name">
+                    <button type="submit">Add Brand</button>
+                </form>
+            </div>
+
+            <!-- Existing Brands Table -->
+            <h3>Existing Brands</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Brand Name</th>      
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for brand in brands %}
+                    <tr>
+                        <td>{{ brand.brand_name }}</td>                            
+                        <td>
+                            <form action="{{ url_for('delete_brand', brand_id=brand.id) }}" method="POST" class="delete-form">
+                                <button type="submit" class="delete-btn" data-brand="{{ brand.brand_name }}">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Brand Distribution Chart -->
+            <div class="chart-box">
+                <h3>Vehicles per Brand</h3>
+                <canvas id="brandChart"></canvas>
+            </div>
+        </section>
+    </div>
+
+    <!-- Logout Confirmation -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("logout-btn").addEventListener("click", function(event) {
+                event.preventDefault();
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You are about to log out.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#3085d6",
+                    confirmButtonText: "Yes, log out!",
+                    cancelButtonText: "Cancel"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "{{ url_for('logout') }}";
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Confirm Delete Function -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll(".delete-btn").forEach(button => {
+                button.addEventListener("click", function(event) {
+                    event.preventDefault();
+                    let brandName = this.dataset.brand;
+                    let form = this.closest("form");
+
+                    Swal.fire({
+                        title: "Are you sure?",
+                        text: `You are about to delete the brand: ${brandName}`,
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#d33",
+                        cancelButtonColor: "#3085d6",
+                        confirmButtonText: "Yes, delete it!"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+    <!-- Brand Chart Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctx = document.getElementById("brandChart").getContext("2d");
+            new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: [{% for brand in brand_chart_data %}"{{ brand.brand_name }}",{% endfor %}],
+                    datasets: [{
+                        label: "Number of Vehicles",
+                        data: [{% for brand in brand_chart_data %}{{ brand.vehicle_count }},{% endfor %}],
+                        backgroundColor: "#007bff",
+                        borderColor: "#0056b3",
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

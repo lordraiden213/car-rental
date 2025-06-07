@@ -1,0 +1,394 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(to bottom right, #8a79f0, #ffffff);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dashboard Box */
+.dashboard-container {
+    width: 95%;
+    max-width: 1400px;
+    display: flex;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    height: 90vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 260px;
+    background: #2c3e50;
+    color: #ffffff;
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin-bottom: 10px;
+}
+
+.sidebar ul li a {
+    display: block;
+    padding: 12px;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 6px;
+    background: #34495e;
+    transition: 0.3s ease;
+    text-align: center;
+}
+
+.sidebar ul li a:hover,
+.sidebar ul li a.active {
+    background: #1abc9c;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    background: #f1f2ff;
+    overflow-y: auto;
+}
+
+.main-content h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 26px;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    padding: 10px;
+}
+
+.stat-box {
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    transition: 0.3s ease-in-out;
+}
+
+.stat-box:hover {
+    transform: translateY(-5px);
+}
+
+.stat-box h3 {
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.stat-box p {
+    font-size: 22px;
+    font-weight: bold;
+    color: #1abc9c;
+}
+
+/* Chart Box */
+.chart-box {
+    margin-top: 20px;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 100%;
+}
+
+/* Chart Canvas */
+.chart-box canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .dashboard-container {
+        flex-direction: column;
+        width: 100%;
+        height: auto;
+    }
+
+    .sidebar {
+        width: 100%;
+        text-align: center;
+        padding: 15px;
+    }
+
+    .sidebar ul {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .sidebar ul li {
+        flex: 1 1 30%;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Form Container */
+.form-container-brand {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    margin-bottom: 20px;
+}
+
+.form-container-brand h3 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+.form-container-brand label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.form-container-brand input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.form-container-brand button {
+    background: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.form-container-brand button:hover {
+    background: #0056b3;
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table thead {
+    background: #007bff;
+    color: white;
+}
+
+table thead th {
+    padding: 10px;
+    text-align: left;
+}
+
+table tbody tr:nth-child(even) {
+    background: #f2f2f2;
+}
+
+table tbody tr:hover {
+    background: #ddd;
+}
+
+table td, table th {
+    padding: 5px;
+    border: 1px solid #ccc;
+}
+
+/* Delete Button */
+.delete-btn {
+    background: #dc3545;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background: #c82333;
+}
+
+/* Update Button */
+.update-btn {
+    background: #1635e9;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+
+.update-btn:hover {
+    background: #1e35b9;
+}
+
+/* View Button */
+.view-btn {
+    background: #1635e9;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.view-btn:hover {
+    background: #1e35b9;
+}
+
+/* Vehicle Form */
+.vehicle-form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: auto;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.submit-btn {
+    background: #3498db;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.submit-btn:hover {
+    background: #2980b9;
+}
+
+/* Approve Button */
+.approve-btn {
+    background: #1635e9;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.approve-btn:hover {
+    background: #1e35b9;
+}
+.booking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+}
+
+.booking-card {
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-left: 5px solid #007bff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.booking-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.booking-row span {
+    flex: 1 1 200px;
+    font-size: 14px;
+}
+
+.booking-actions {
+    margin-top: 10px;
+    text-align: right;
+}
+
+.approve-btn, .return-btn {
+    background: #1635e9;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.approve-btn:hover, .return-btn:hover {
+    background: #1e35b9;
+}

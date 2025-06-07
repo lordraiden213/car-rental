@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Details</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .edit-input {
+            display: none;
+            width: 100%;
+        }
+
+        .file-input {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .edit-btn, .save-btn, .back-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .edit-btn:hover,
+        .save-btn:hover,
+        .back-btn:hover {
+            background-color: #45a049;
+        }
+
+        .save-btn {
+            display: none;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <h2>User Details</h2>
+            <ul>
+                <li><a href="{{ url_for('manage_users') }}">Back to Users</a></li>
+            </ul>
+        </nav>
+
+        <div class="main-content">
+            <h2>User Details</h2>
+            <form method="POST" action="{{ url_for('update_user', user_id=user.id) }}" enctype="multipart/form-data">
+                <table border="1">
+                    <tr>
+                        <th colspan="2">Photos</th>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center;">
+                            <strong>Profile Picture</strong><br>
+                            <img src="{{ url_for('static', filename=user.profile_picture) }}" alt="Profile Picture" style="width: 100px;">
+                            <br>
+                            <input type="file" name="profile_picture" accept="image/*" class="file-input">
+                        </td>
+                        <td style="text-align: center;">
+                            <strong>License Image</strong><br>
+                            <img src="{{ url_for('static', filename=user.license_image) }}" alt="License Image" style="width: 100px;">
+                            <br>
+                            <input type="file" name="license_image" accept="image/*" class="file-input">
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <th>First Name</th>
+                        <td>
+                            <span class="display-value">{{ user.firstname }}</span>
+                            <input class="edit-input" type="text" name="firstname" value="{{ user.firstname }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Last Name</th>
+                        <td>
+                            <span class="display-value">{{ user.lastname }}</span>
+                            <input class="edit-input" type="text" name="lastname" value="{{ user.lastname }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Email</th>
+                        <td>
+                            <span class="display-value">{{ user.email }}</span>
+                            <input class="edit-input" type="email" name="email" value="{{ user.email }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Phone</th>
+                        <td>
+                            <span class="display-value">{{ user.phone }}</span>
+                            <input class="edit-input" type="text" name="phone" value="{{ user.phone }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Birthday</th>
+                        <td>
+                            <span class="display-value">{{ user.birthday }}</span>
+                            <input class="edit-input" type="date" name="birthday" value="{{ user.birthday }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Age</th>
+                        <td>
+                            <span class="display-value">{{ user.age }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>City</th>
+                        <td>
+                            <span class="display-value">{{ user.city }}</span>
+                            <input class="edit-input" type="text" name="city" value="{{ user.city }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Province</th>
+                        <td>
+                            <span class="display-value">{{ user.province }}</span>
+                            <input class="edit-input" type="text" name="province" value="{{ user.province }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Barangay</th>
+                        <td>
+                            <span class="display-value">{{ user.barangay }}</span>
+                            <input class="edit-input" type="text" name="barangay" value="{{ user.barangay }}">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Joined On</th>
+                        <td>{{ user.created_at }}</td>
+                    </tr>
+                </table>
+
+                <button type="button" class="edit-btn" onclick="enableEdit()">Edit</button>
+                <button type="submit" class="save-btn">Save Changes</button>
+                <button type="button" class="back-btn" onclick="history.back()">Back</button>
+            </form>
+
+            <!-- Add a button to trigger the delete confirmation -->
+            <form id="delete-form" method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" style="display: inline;">
+                <button type="button" class="delete-btn" onclick="confirmDelete()">Delete User</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function enableEdit() {
+            const inputs = document.querySelectorAll('.edit-input');
+            const spans = document.querySelectorAll('.display-value');
+            const saveBtn = document.querySelector('.save-btn');
+            const editBtn = document.querySelector('.edit-btn');
+            const fileInputs = document.querySelectorAll('.file-input');
+
+            inputs.forEach(input => input.style.display = 'inline-block');
+            fileInputs.forEach(fileInput => fileInput.style.display = 'inline-block'); // Show the file inputs
+            spans.forEach(span => span.style.display = 'none');
+
+            saveBtn.style.display = 'inline-block';
+            editBtn.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('delete-form').submit(); // Submit the form to delete the user
+                }
+            });
+        }
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            {% if category == 'success' %}
+                Swal.fire({
+                    title: 'Success!',
+                    text: '{{ message }}',
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+            {% endif %}
+        {% endfor %}
+        {% endwith %}
+    </script>
+</body>
+</html>

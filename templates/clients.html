@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Testimonials - Thrifty Road{% endblock %}
+
+{% block content %}
+<section class="clients" id="clients">
+  <div class="section__container clients__container">
+    <h2 class="section__header">Customer Comments</h2>
+    <p class="section__description">
+      Hear directly from our customers. Click a testimonial to view the vehicle they talked about.
+    </p>
+
+    <div class="swiper">
+      <div class="swiper-wrapper">
+        {% for testimonial in testimonials %}
+        <div class="swiper-slide">
+          <a href="{{ url_for('view_vehicle', vehicle_id=testimonial.vehicle_id) }}" class="client__card">
+            <div class="client__details">
+              <div class="client__profile-pic">
+                <!-- Profile Picture: Circle Icon -->
+                <img src="{{ url_for('static', filename=testimonial.profile_picture or 'uploads/default.jpg') }}" alt="Profile Picture" class="profile-pic">
+              </div>
+              <div>
+                <h4>{{ testimonial.user_name }}</h4>
+                <p>{{ testimonial.comment_text }}</p>
+                <div class="client__rating">
+                  {% for i in range(1, 6) %}
+                  {% if testimonial.average_rating is not none and i <= testimonial.average_rating %}
+                  <span><i class="ri-star-fill"></i></span>
+                    {% else %}
+                      <span><i class="ri-star-line"></i></span>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+        {% else %}
+        <div class="swiper-slide">
+          <div class="client__card">
+            <p>No testimonials found yet. Once users start posting, they'll appear here.</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

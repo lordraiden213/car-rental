@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- SweetAlert2 -->
+</head>
+<body>
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <h2>Dashboard</h2>
+
+            <ul>
+                <li><a href="{{ url_for('dashboard') }}" class="active">Dashboard</a></li>
+                <li><a href="{{ url_for('manage_brands') }}">Manage Vehicle Brands</a></li>
+                <li><a href="{{ url_for('manage_vehicles') }}">Manage Vehicles</a></li>
+                <li><a href="{{ url_for('post_vehicle') }}">Post Vehicle</a></li>
+                <li><a href="{{ url_for('manage_bookings') }}">Manage Bookings</a></li>
+                <li><a href="{{ url_for('manage_testimonials') }}">Manage Testimonials</a></li>
+                <li><a href="{{ url_for('manage_queries') }}">Manage Queries</a></li>
+                <li><a href="{{ url_for('manage_users') }}">Manage Users</a></li>
+                <li><a href="{{ url_for('manage_subscribers') }}">Manage Subscribers</a></li>
+                <li><a href="#" id="logout-btn">Logout</a></li> <!-- Logout Button with Pop-up -->
+            </ul>
+        </nav>
+
+        <!-- Flash Messages for Notifications -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let messages = {{ messages | tojson | safe }};
+            messages.forEach(([category, message]) => {
+                let title = message; // Default title is the message itself
+                
+                // If the message is about logout, change the title
+                if (message.toLowerCase().includes("logout")) {
+                    title = "Logout Successful";
+                }
+
+                Swal.fire({
+                    icon: category, 
+                    title: title, 
+                    text: category === "success" && title === "Logout Successful" ? message : "", 
+                    showConfirmButton: false, 
+                    timer: 2000
+                });
+            });
+        });
+    </script>
+    {% endif %}
+{% endwith %}
+
+
+        <section class="main-content">
+            <h1>Welcome, Admin!</h1>
+
+            <!-- Statistics Grid -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h3>Total Users</h3>
+                    <p>{{ total_users }}</p>
+                </div>
+
+                <div class="stat-box">
+                    <h3>Total Brands</h3>
+                    <p>{{ total_brands }}</p>
+                </div>
+
+                <div class="stat-box">
+                    <h3>Total Cars</h3>
+                    <p>{{ total_cars }}</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Available Cars</h3>
+                    <p>{{ available_cars }}</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Not Available Cars</h3>
+                    <p>{{ not_available_cars }}</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Booked Cars</h3>
+                    <p>{{ booked_cars }}</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Pending Bookings</h3>
+                    <p>{{ pending_bookings }}</p>
+                </div>
+            </div>
+
+            <!-- Car Status Chart -->
+            <div class="chart-box">
+                <canvas id="carStatusChart"></canvas>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function confirmLogout() {
+            return confirm("Are you sure you want to logout?");
+        }
+    </script>
+
+    <!-- Logout Pop-up Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("logout-btn").addEventListener("click", function(event) {
+                event.preventDefault(); // Prevent default link behavior
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You are about to log out of your admin account.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#3085d6",
+                    confirmButtonText: "Yes, log out!",
+                    cancelButtonText: "Cancel"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "{{ url_for('logout') }}"; // Redirect to logout route
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Car Status Chart Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctx = document.getElementById("carStatusChart").getContext("2d");
+            new Chart(ctx, {
+                type: "bar", // Change from "pie" to "bar"
+                data: {
+                    labels: ["Available Cars", "Not Available Cars", "Booked Cars", "Pending Bookings"],
+                    datasets: [{
+                        label: "Car Status",
+                        data: [{{ available_cars }}, {{ not_available_cars }}, {{ booked_cars }}, {{ pending_bookings }}],
+                        backgroundColor: ["#28a745", "#dc3545", "#007bff", "#ffc107"],
+                        borderColor: ["#1e7e34", "#bd2130", "#0056b3", "#d39e00"],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/assets/logo-white.png') }}" type="image/png">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Booking</title>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav__header">
+                <div class="nav__logo">
+                    <a href="{{ url_for('home') }}" class="logo">
+                        <img src="{{ url_for('static', filename='img/assets/logo-white.png') }}" alt="logo">
+                        <img src="{{ url_for('static', filename='img/assets/logo-dark.png') }}" alt="logo" class="logo-dark" />
+                        <span>Thrifty Road</span>
+                    </a>
+                </div>
+                <div class="nav__menu__btn" id="menu-btn">
+                    <i class="ri-menu-line"></i>
+                </div>
+            </div>
+            <ul class="nav__links" id="nav-links">
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('about') }}">About</a></li>
+                <li><a href="{{ url_for('deals') }}">Rental Deals</a></li>
+                <li><a href="{{ url_for('choose') }}">Why Choose Us</a></li>
+                <li><a href="{{ url_for('clients') }}">Testimonials</a></li>
+                {% if 'user_id' not in session %}
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('update_profile') }}">Update Profile</a></li>
+                    <li><a href="{{ url_for('chat') }}">Chat</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main class="booking-container">
+        <!-- Vehicle Info -->
+        <section class="vehicle-details">
+            <h2>{{ vehicles.model }}</h2>
+            <img src="{{ url_for('static', filename='uploads/vehicles/' + vehicles.image_url) }}" alt="{{ vehicles.model }}" class="vehicle-image">
+            <p><strong>Transmission:</strong> {{ vehicles.transmission }}</p>
+            <p><strong>Seats:</strong> {{ vehicles.people }} People</p>
+            <p><strong>Fuel Type:</strong> {{ vehicles.gas }}</p>
+            <p><strong>Price:</strong>
+                {% if discount > 0 %}
+                    {% set discounted_price = vehicles.price_per_day - (vehicles.price_per_day * discount / 100) %}
+                    <del>₱{{ vehicles.price_per_day }}</del>
+                    <span style="color: green; font-weight: bold;">₱{{ discounted_price | round(2) }}/day ({{ discount }}% OFF)</span>
+                {% else %}
+                    ₱{{ vehicles.price_per_day }}/day
+                {% endif %}
+            </p>
+            <br>
+            <a href="{{ url_for('deals') }}" class="btn">Back to Deals</a>
+        </section>
+
+        <section class="booking-form">
+            <h3>Book This Vehicle</h3>
+            <form method="POST" action="{{ url_for('add_booking', vehicles_id=vehicles.id) }}">
+                <fieldset>
+                    <legend>Booking Details</legend>
+                    <div>
+                        <label for="start_date">Start Date</label>
+                        <input type="date" id="start_date" name="start_date" required
+                               value="{{ today }}" min="{{ today }}"
+                               {% if vehicles.status in ['pending', 'booked'] %}disabled{% endif %}
+                               onchange="updateReturnDate()">
+                    </div>
+                    <div>
+                        <label for="return_date">Return Date</label>
+                        <input type="date" id="return_date" name="return_date" required
+                               value="{{ tomorrow }}" readonly
+                               {% if vehicles.status in ['pending', 'booked'] %}disabled{% endif %}>
+                    </div> 
+                    <p>Status: {{ vehicles.status }}</p>
+
+                    {% if vehicles.status == 'available' %}
+                    <a href="{{ url_for('fill_up_booking', vehicles_id=vehicles['id']) }}" class="btn btn-primary">
+                        Book Now
+                    </a>
+                
+                {% elif show_cancel_booking %}
+                    <!-- Cancel Pending Booking Button -->
+                    <form method="post" onsubmit="return confirm('Are you sure you want to cancel your pending booking?');">
+                        <button type="submit" name="cancel_booking" class="btn btn-danger">
+                            Cancel Pending Booking
+                        </button>
+                    </form>
+                
+                {% elif vehicles.status == 'booked' and booking %}
+                    <!-- Early Return Button -->
+                    <form method="post" onsubmit="return confirm('Submit early return?');">
+                        <input type="hidden" name="early_return_date" value="{{ today }}">
+                        <button type="submit" class="btn btn-warning">
+                            Submit Early Return
+                        </button>
+                    </form>
+                
+                {% else %}
+                    <p class="text-muted">The vehicle is currently unavailable for booking.</p>
+                {% endif %}
+                
+                </fieldset>
+            </form>
+        </section>
+
+        <section class="testimonial-section">
+            <h3>Comments</h3>
+            <form method="POST" action="{{ url_for('add_testimonial', vehicles_id=vehicles['id']) }}">
+                <textarea name="comment_text" required></textarea>
+                <select name="rating" required>
+                    <option value="">Select rating</option>
+                    <option value="1">1 Star</option>
+                    <option value="2">2 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="5">5 Stars</option>
+                </select>
+                <button type="submit">Submit</button>
+            </form>
+
+            {% if testimonials %}
+                <ul>
+                    {% for testimonial in testimonials %}
+                        <li>
+                            <p>{{ testimonial.user_name }}</p>
+                            <p><strong>Rating:</strong> {{ testimonial.average_rating }}</p>
+                            <p><strong>By:</strong> User ID: {{ testimonial.user_id }}</p>
+                            <p><strong>Date:</strong> {{ testimonial.created_at }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Testimonials will be displayed there</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    Swal.fire({
+                        icon: "{{ 'success' if category == 'success' else 'error' }}",
+                        title: "{{ message }}",
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </script>
+    <script>
+        function updateReturnDate() {
+            const startDate = document.getElementById("start_date").value;
+            if (startDate) {
+                const start = new Date(startDate);
+                start.setDate(start.getDate() + 1); 
+
+                // Format the return date to YYYY-MM-DD
+                const returnDate = start.toISOString().split('T')[0]; // Get the date in YYYY-MM-DD format
+                document.getElementById("return_date").value = returnDate; // Set the return date
+
+                // Update the max date for return date input (set it to 1 day after start date)
+                const returnMaxDate = returnDate; // The max date should also be 1 day after the start date
+                document.getElementById("return_date").setAttribute("max", returnMaxDate);
+            }
+        }
+
+        // Call the function to set the return date when the page loads
+        document.addEventListener("DOMContentLoaded", function() {
+            updateReturnDate();
+        });
+    </script>
+
+</body>
+</html>

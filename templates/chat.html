@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat with Admin - Thrifty Road{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="sidebar">
+        <button class="tab active" onclick="showSection('chat')">
+            <i class="fas fa-comments"></i> Chat
+        </button>
+        <button class="tab" onclick="showSection('help')">
+            <i class="fas fa-question-circle"></i> Help
+        </button>
+    </div>
+    <div class="content">
+        <div id="chat" class="section">
+            <h2>Chat with Admin</h2>
+
+            <div id="messages" class="messages-box">
+                {% for msg in messages %}
+                <div class="message {{ 'user' if msg.sender == 'user' else 'admin' }}">
+                    {% if msg.email %}
+                        <small>{{ msg.email }}</small>
+                    {% endif %}
+                    <div class="message-bubble">
+                        {{ msg.message }}
+                    </div>
+                    <small>{{ msg.created_at }}</small>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div id="typing-indicator" style="font-size: 13px; color: gray; margin-top: -10px; margin-bottom: 5px;"></div>
+            <div id="waiting-indicator" style="font-size: 13px; color: gray; margin-bottom: 10px;"></div>
+
+            <div class="input-box">
+                <textarea id="message" placeholder="Type your message..."></textarea>
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+        <div id="help" class="section hidden">
+            <h2>Help Section</h2>
+            <p>Here you can find help regarding any issues or FAQs.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+    let adminHasReplied = false;  // Flag to track admin's first reply
+
+    socket.on('connect', () => {
+        socket.emit('join', { room: "chat_{{ user_id }}_{{ admin_id }}" });
+    });
+
+    socket.on('message', function(msg) {
+        const sender = msg.sender || 'admin';
+        const text = msg.text || msg;
+        const email = msg.email || '';
+        appendMessage(sender, text, email);
+    });
+
+    socket.on('private_message', function(msg) {
+        const sender = msg.sender || 'admin';
+        const text = msg.text || msg;
+        const email = msg.email || '';
+        appendMessage(sender, text, email);
+
+        if (sender === 'admin') {
+            if (!adminHasReplied) {
+                appendSystemMessage("✅ Okay! Now you can chat with the admin.");
+                adminHasReplied = true;
+            }
+
+            setTimeout(() => {
+                document.getElementById('waiting-indicator').textContent = '';
+            }, 5000);  // hide after 5 seconds
+        }
+    });
+
+    socket.on('typing', function(data) {
+        const typingDiv = document.getElementById('typing-indicator');
+        if (data.typing) {
+            typingDiv.textContent = `${data.sender === 'admin' ? 'Admin' : 'User'} is typing...`;
+        } else {
+            typingDiv.textContent = '';
+        }
+    });
+
+    function appendMessage(sender, text, email = '') {
+        const messagesBox = document.getElementById('messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender === 'user' ? 'user' : 'admin');
+
+        if (email) {
+            const senderLabel = document.createElement('small');
+            senderLabel.textContent = email;
+            senderLabel.style.display = 'block';
+            senderLabel.style.fontSize = '12px';
+            senderLabel.style.marginBottom = '2px';
+            messageDiv.appendChild(senderLabel);
+        }
+
+        const messageBubble = document.createElement('div');
+        messageBubble.classList.add('message-bubble');
+        messageBubble.textContent = text;
+
+        messageDiv.appendChild(messageBubble);
+        messagesBox.appendChild(messageDiv);
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+
+    function appendSystemMessage(text) {
+        const messagesBox = document.getElementById('messages');
+        const systemMsg = document.createElement('div');
+        systemMsg.style.textAlign = 'center';
+        systemMsg.style.color = 'gray';
+        systemMsg.style.fontSize = '13px';
+        systemMsg.style.margin = '10px 0';
+        systemMsg.textContent = text;
+        messagesBox.appendChild(systemMsg);
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+
+    function sendMessage() {
+        const messageInput = document.getElementById('message');
+        const message = messageInput.value.trim();
+        if (message) {
+            socket.emit('private_message', {
+                sender: 'user',
+                text: message,
+                room: `chat_{{ user_id }}_{{ admin_id }}`,
+                user_id: "{{ user_id }}",
+                email: "{{ user_email }}"
+            });
+            messageInput.value = '';
+            document.getElementById('waiting-indicator').textContent = "Please wait while the admin responds...";
+        }
+    }
+
+    const messageInput = document.getElementById('message');
+    let typingTimeout;
+
+    messageInput.addEventListener('input', () => {
+        socket.emit('typing', { sender: 'user', typing: true });
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            socket.emit('typing', { sender: 'user', typing: false });
+        }, 1000);
+    });
+
+    function showSection(sectionId) {
+        document.querySelectorAll('.section').forEach(section => {
+            section.classList.add('hidden');
+        });
+        document.getElementById(sectionId).classList.remove('hidden');
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+    }
+</script>
+
+<style>
+.chat-container {
+    display: flex;
+    height: 74vh;
+    border: 1px solid #ddd;
+    padding: 10px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #f4f4f4;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab {
+    background: none;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.tab.active {
+    background-color: #ccc;
+}
+
+.content {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+#messages {
+    height: 400px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.message .message-bubble {
+    max-width: 60%;
+    padding: 10px;
+    border-radius: 15px;
+    margin-left: 10px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.message.admin .message-bubble {
+    background-color: #e0e0e0;
+    align-self: flex-start;
+}
+
+.message.user .message-bubble {
+    background-color: #4caf50;
+    color: white;
+    align-self: flex-end;
+}
+
+.input-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+#message {
+    width: 65%;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    resize: none;
+    height: 40px;
+    box-sizing: border-box;
+    margin-right: 10px;
+}
+
+button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+</style>
+{% endblock %}
